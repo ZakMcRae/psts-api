@@ -2,7 +2,7 @@ from models import User, Post, Reply
 import db_session
 
 
-def add_users():
+def add_sample_users():
     zak = User()
     zak.username = "zak"
     zak.email = "z@z.com"
@@ -35,7 +35,7 @@ def add_users():
         return f"error occurred: {error}"
 
 
-def add_posts():
+def add_sample_posts():
     session = db_session.create_session()
     zak = session.query(User).filter_by(username="zak").first()
     jess = session.query(User).filter_by(username="jess").first()
@@ -73,7 +73,7 @@ def add_posts():
         return f"error occurred: {error}"
 
 
-def add_replies():
+def add_sample_replies():
     session = db_session.create_session()
     pz = session.query(Post).filter_by(user_id=1).first()
     pj = session.query(Post).filter_by(user_id=2).first()
@@ -115,7 +115,7 @@ def add_replies():
         return f"error occurred: {error}"
 
 
-def add_follows():
+def add_sample_follows():
     session = db_session.create_session()
     zak = session.query(User).filter_by(username="zak").first()
     jess = session.query(User).filter_by(username="jess").first()

@@ -1,9 +1,14 @@
 import fastapi
 
 import db_session
-from models import User, Post, Reply
+from models import User
 
-from util.mock_data import add_users, add_posts, add_replies, add_follows
+from util.mock_data import (
+    add_sample_users,
+    add_sample_posts,
+    add_sample_replies,
+    add_sample_follows,
+)
 
 router = fastapi.APIRouter()
 
@@ -19,15 +24,15 @@ def home():
 def test():
     session = db_session.create_session()
     zak: User = session.query(User).filter_by(username="zak").first()
-    jess: User = session.query(User).filter_by(username="jess").first()
-    theo: User = session.query(User).filter_by(username="theo").first()
-    elliot: User = session.query(User).filter_by(username="elliot").first()
+    # jess: User = session.query(User).filter_by(username="jess").first()
+    # theo: User = session.query(User).filter_by(username="theo").first()
+    # elliot: User = session.query(User).filter_by(username="elliot").first()
 
     return zak.followers
 
 
-@router.get("/queryusers")
-def queryusers():
+@router.get("/query_users")
+def query_users():
     session = db_session.create_session()
     x = session.query(User).all()
     # y = session.query(User).filter_by(id=1).first()
@@ -35,21 +40,21 @@ def queryusers():
     return x
 
 
-@router.get("/addusers")
-def addusers():
-    return add_users()
+@router.get("/add_users")
+def add_users():
+    return add_sample_users()
 
 
-@router.get("/addposts")
-def addposts():
-    return add_posts()
+@router.get("/add_posts")
+def add_posts():
+    return add_sample_posts()
 
 
-@router.get("/addreplies")
-def addreplies():
-    return add_replies()
+@router.get("/add_replies")
+def add_replies():
+    return add_sample_replies()
 
 
-@router.get("/addfollows")
-def addfollows():
-    return add_follows()
+@router.get("/add_follows")
+def add_follows():
+    return add_sample_follows()
