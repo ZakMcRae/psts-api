@@ -62,6 +62,21 @@ class User(SQLAlchemyBase):
         order_by="asc(Reply.date_created)",
         cascade="all,delete-orphan",
     )
+    following = orm.relationship(
+        "User",
+        lambda: user_follow,
+        primaryjoin=lambda: User.id == user_follow.c.user_id,
+        secondaryjoin=lambda: User.id == user_follow.c.following_id,
+        backref="followers",
+    )
 
     def __repr__(self):
         return f"User:{self.username}, ID:{self.id}"
+
+
+user_follow = sa.Table(
+    "user_follow",
+    SQLAlchemyBase.metadata,
+    sa.Column("user_id", sa.Integer, sa.ForeignKey(User.id), primary_key=True),
+    sa.Column("following_id", sa.Integer, sa.ForeignKey(User.id), primary_key=True),
+)
