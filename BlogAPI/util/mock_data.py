@@ -1,5 +1,5 @@
-from SQLAlchemy_models import User, Post, Reply
-import db_session
+from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
+from BlogAPI.db import db_session
 
 
 def add_sample_users():

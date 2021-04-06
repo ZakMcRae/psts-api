@@ -3,8 +3,8 @@ import json
 import fastapi
 import uvicorn
 
-import routes
-import db_session
+from BlogAPI.routers import routes
+from BlogAPI.db import db_session
 
 api = fastapi.FastAPI()
 

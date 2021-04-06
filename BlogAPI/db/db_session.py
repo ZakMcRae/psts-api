@@ -4,7 +4,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from sqlalchemy.orm import Session
 
-from SQLAlchemy_models import SQLAlchemyBase
+from BlogAPI.db.SQLAlchemy_models import SQLAlchemyBase
 
 __factory: Optional[Callable[[], Session]] = None
 
@@ -25,7 +25,7 @@ def global_init():
     __factory = orm.sessionmaker(bind=engine)
 
     # noinspection PyUnresolvedReferences
-    from SQLAlchemy_models import User
+    from BlogAPI.db.SQLAlchemy_models import User
 
     SQLAlchemyBase.metadata.create_all(engine)
 

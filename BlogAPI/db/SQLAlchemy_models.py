@@ -1,6 +1,9 @@
 import datetime
 from typing import Optional, List
 
+from passlib.hash import bcrypt
+
+
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
@@ -69,6 +72,9 @@ class User(SQLAlchemyBase):
         secondaryjoin=lambda: User.id == user_follow.c.following_id,
         backref="followers",
     )
+
+    def verify_password(self, password):
+        return bcrypt.verify(password, self.hs_password)
 
     def __repr__(self):
         return f"User:{self.username}, ID:{self.id}"
