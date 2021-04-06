@@ -2,3 +2,6 @@ SQLAlchemy
 fastapi
 pyjwt
 uvicorn
+python-multipart
+pydantic
+passlib[bcrypt]
