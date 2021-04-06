@@ -1,4 +1,4 @@
-from models import User, Post, Reply
+from SQLAlchemy_models import User, Post, Reply
 import db_session
 
 
