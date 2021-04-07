@@ -5,3 +5,5 @@ uvicorn
 python-multipart
 pydantic
 passlib[bcrypt]
+starlette
+requests
