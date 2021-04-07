@@ -1,12 +1,9 @@
 import datetime
 from typing import Optional, List
 
-from passlib.hash import bcrypt
-
-
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
-
+from passlib.hash import bcrypt
 from sqlalchemy.ext.declarative import declarative_base
 
 SQLAlchemyBase = declarative_base()
@@ -77,7 +74,7 @@ class User(SQLAlchemyBase):
         return bcrypt.verify(password, self.hs_password)
 
     def __repr__(self):
-        return f"User:{self.username}, ID:{self.id}"
+        return f"user:{self.username}, id:{self.id}"
 
 
 user_follow = sa.Table(
