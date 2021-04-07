@@ -24,9 +24,6 @@ def global_init():
     )
     __factory = orm.sessionmaker(bind=engine)
 
-    # noinspection PyUnresolvedReferences
-    from BlogAPI.db.SQLAlchemy_models import User
-
     SQLAlchemyBase.metadata.create_all(engine)
 
 
