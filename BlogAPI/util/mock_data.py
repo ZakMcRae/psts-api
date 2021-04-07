@@ -1,27 +1,28 @@
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
 from BlogAPI.db import db_session
+from passlib.hash import bcrypt
 
 
 def add_sample_users():
     zak = User()
     zak.username = "zak"
     zak.email = "z@z.com"
-    zak.hs_password = "123"
+    zak.hs_password = bcrypt.hash("123")
 
     jess = User()
     jess.username = "jess"
     jess.email = "j@j.com"
-    jess.hs_password = "123"
+    jess.hs_password = bcrypt.hash("123")
 
     theo = User()
     theo.username = "theo"
     theo.email = "t@t.com"
-    theo.hs_password = "123"
+    theo.hs_password = bcrypt.hash("123")
 
     elliot = User()
     elliot.username = "elliot"
     elliot.email = "e@e.com"
-    elliot.hs_password = "123"
+    elliot.hs_password = bcrypt.hash("123")
 
     session = db_session.create_session()
     try:
