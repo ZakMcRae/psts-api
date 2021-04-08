@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from BlogAPI.config import config_settings
 from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User
+from BlogAPI.pydantic_models.pydantic_models import UserOut, UserIn
 from BlogAPI.util.mock_data import (
     add_sample_users,
     add_sample_posts,
@@ -42,14 +43,15 @@ def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@router.get("/test")
+@router.get("/")
 def test():
     # username = "elliot"
     # session = db_session.create_session()
     # user = session.query(User).filter_by(username=username).first()
-    return authenticate_user("theo", "123")
+    return "Home - Success"
 
 
+# todo - delete - temp route for testing/dev
 @router.get("/query_users")
 def query_users():
     session = db_session.create_session()
@@ -59,21 +61,16 @@ def query_users():
     return x
 
 
-@router.get("/add_users")
-def add_users():
-    return add_sample_users()
+# todo - delete - temp route for testing/dev
+@router.get("/add_db_info")
+def add_db_info():
+    add_sample_users()
+    add_sample_posts()
+    add_sample_replies()
+    add_sample_follows()
+    return "Complete"
 
 
-@router.get("/add_posts")
-def add_posts():
-    return add_sample_posts()
-
-
-@router.get("/add_replies")
-def add_replies():
-    return add_sample_replies()
-
-
-@router.get("/add_follows")
-def add_follows():
-    return add_sample_follows()
+@router.post("/user", response_model=UserOut)
+def test_user(user: UserIn):
+    return user
