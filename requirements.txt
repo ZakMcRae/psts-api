@@ -7,3 +7,4 @@ pydantic
 passlib[bcrypt]
 starlette
 requests
+email-validator
