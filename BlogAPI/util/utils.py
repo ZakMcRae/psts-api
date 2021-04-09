@@ -1,5 +1,6 @@
 import jwt
 from fastapi import Depends, HTTPException
+from sqlalchemy import func
 from starlette import status
 
 from BlogAPI.config import config_settings
@@ -33,3 +34,31 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Username or Password",
         )
+
+
+def validate_new_user(username: str, email: str):
+    session = db_session.create_session()
+
+    db_username = (
+        session.query(User.username)
+        .filter(func.lower(User.username) == username.lower())
+        .scalar()
+    )
+    if db_username:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username is taken, please try another",
+        )
+
+    db_email = (
+        session.query(User.email)
+        .filter(func.lower(User.email) == email.lower())
+        .scalar()
+    )
+    if db_email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email is taken, please try another",
+        )
+
+    return True
