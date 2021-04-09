@@ -13,7 +13,6 @@ class Reply(SQLAlchemyBase):
     __tablename__ = "replies"
 
     id: int = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    title: str = sa.Column(sa.String, nullable=False)
     body: str = sa.Column(sa.TEXT, nullable=False)
     date_created: datetime = sa.Column(
         sa.DATETIME,
@@ -54,12 +53,12 @@ class User(SQLAlchemyBase):
     hs_password: str = sa.Column(sa.String(60), nullable=False)
     posts: Optional[List[Post]] = orm.relationship(
         "Post",
-        order_by="asc(Post.date_created)",
+        order_by="desc(Post.date_created)",
         cascade="all,delete-orphan",
     )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
-        order_by="asc(Reply.date_created)",
+        order_by="desc(Reply.date_created)",
         cascade="all,delete-orphan",
     )
     following = orm.relationship(
