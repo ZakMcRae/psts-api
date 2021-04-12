@@ -2,7 +2,7 @@ import fastapi
 import uvicorn
 
 from BlogAPI.db import db_session
-from BlogAPI.routers import routes, user
+from BlogAPI.routers import routes, user, post
 
 api = fastapi.FastAPI()
 
@@ -19,6 +19,7 @@ def configure_db():
 def configure_routing():
     api.include_router(routes.router)
     api.include_router(user.router)
+    api.include_router(post.router)
 
 
 if __name__ == "__main__":
