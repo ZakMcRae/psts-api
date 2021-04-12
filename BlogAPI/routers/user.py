@@ -10,7 +10,7 @@ from starlette import status
 from BlogAPI.config import config_settings
 from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
-from BlogAPI.pydantic_models.pydantic_models import UserIn, UserOut, PostOut
+from BlogAPI.pydantic_models.pydantic_models import UserIn, UserOut, PostOut, FollowOut
 from BlogAPI.util.utils import get_current_user, validate_new_user, authenticate_user
 
 router = APIRouter()
@@ -40,7 +40,7 @@ def create_user(user_in: UserIn):
 def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Username or Password",
         )
@@ -93,3 +93,36 @@ def get_users_replies(
         user_replies.sort(key=lambda reply: reply.date_created)
 
     return user_replies[skip : skip + limit]
+
+
+@router.post("/user/follow/<user_id>", response_model=FollowOut)
+def follow_user(user_id, user=Depends(get_current_user)):
+    session = db_session.create_session()
+    user_to_follow: User = session.query(User).get(user_id)
+
+    if user in user_to_follow.followers:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="User already followed",
+        )
+
+    user_to_follow.followers += [user]
+    session.commit()
+
+    resp = FollowOut(success=f"{user.username} now following {user_to_follow.username}")
+
+    return resp
+
+
+@router.get("/user/<user_id>/followers", response_model=List[UserOut])
+def get_followers(user_id):
+    session = db_session.create_session()
+    user = session.query(User).get(user_id)
+    return user.followers
+
+
+@router.get("/user/<user_id>/following", response_model=List[UserOut])
+def get_following(user_id):
+    session = db_session.create_session()
+    user = session.query(User).get(user_id)
+    return user.following
