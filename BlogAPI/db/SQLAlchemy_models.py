@@ -23,6 +23,9 @@ class Reply(SQLAlchemyBase):
     user_id = sa.Column(sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     post_id = sa.Column(sa.ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
 
+    def __eq__(self, other):
+        return self.id == other.id
+
 
 class Post(SQLAlchemyBase):
     __tablename__ = "posts"
@@ -42,6 +45,9 @@ class Post(SQLAlchemyBase):
         order_by="asc(Reply.date_created)",
         cascade="all,delete-orphan",
     )
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 
 class User(SQLAlchemyBase):
@@ -74,6 +80,9 @@ class User(SQLAlchemyBase):
 
     def __repr__(self):
         return f"user:{self.username}, id:{self.id}"
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 
 user_follow = sa.Table(
