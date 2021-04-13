@@ -10,7 +10,9 @@ from starlette import status
 from BlogAPI.config import config_settings
 from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
-from BlogAPI.pydantic_models.pydantic_models import UserIn, UserOut, PostOut, ReplyOut
+from BlogAPI.pydantic_models.post_models import PostOut
+from BlogAPI.pydantic_models.reply_models import ReplyOut
+from BlogAPI.pydantic_models.user_models import UserIn, UserOut, UserItemList
 from BlogAPI.util.utils import get_current_user, validate_new_user, authenticate_user
 
 router = APIRouter()
@@ -29,7 +31,6 @@ def create_user(user_in: UserIn):
         session = db_session.create_session()
         session.add(user)
         session.commit()
-        print(user)
         return user
 
     else:
@@ -69,17 +70,15 @@ def get_user(user_id: int):
 
 
 @router.get("/user/<user_id>/posts", response_model=List[PostOut])
-def get_users_posts(
-    user_id: int, skip: int = 0, limit: int = 10, sort_newest_first: bool = True
-):
+def get_users_posts(user_id, user_input: UserItemList):
     session = db_session.create_session()
     user = session.query(User).get(user_id)
     user_posts: List[Post] = user.posts
 
-    if not sort_newest_first:
+    if not user_input.sort_newest_first:
         user_posts.sort(key=lambda post: post.date_created)
 
-    return user_posts[skip : skip + limit]
+    return user_posts[user_input.skip : user_input.skip + user_input.limit]
 
 
 @router.get("/user/<user_id>/replies", response_model=List[ReplyOut])

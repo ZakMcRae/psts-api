@@ -5,7 +5,7 @@ from starlette import status
 
 from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import Post
-from BlogAPI.pydantic_models.pydantic_models import (
+from BlogAPI.pydantic_models.post_models import (
     NewPostIn,
     PostOut,
     UpdatePostIn,
