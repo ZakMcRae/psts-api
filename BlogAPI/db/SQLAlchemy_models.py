@@ -13,7 +13,6 @@ class Reply(SQLAlchemyBase):
     __tablename__ = "replies"
 
     id: int = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    title: str = sa.Column(sa.String, nullable=False)
     body: str = sa.Column(sa.TEXT, nullable=False)
     date_created: datetime = sa.Column(
         sa.DATETIME,
@@ -22,7 +21,13 @@ class Reply(SQLAlchemyBase):
     )
     date_modified: datetime = sa.Column(sa.DATETIME)
     user_id = sa.Column(sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    username = sa.Column(
+        sa.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
+    )
     post_id = sa.Column(sa.ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 
 class Post(SQLAlchemyBase):
@@ -38,11 +43,17 @@ class Post(SQLAlchemyBase):
     )
     date_modified: datetime = sa.Column(sa.DATETIME)
     user_id = sa.Column(sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    username = sa.Column(
+        sa.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
+    )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
-        order_by="asc(Reply.date_created)",
+        order_by="desc(Reply.date_created)",
         cascade="all,delete-orphan",
     )
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 
 class User(SQLAlchemyBase):
@@ -54,13 +65,15 @@ class User(SQLAlchemyBase):
     hs_password: str = sa.Column(sa.String(60), nullable=False)
     posts: Optional[List[Post]] = orm.relationship(
         "Post",
-        order_by="asc(Post.date_created)",
+        order_by="desc(Post.date_created)",
         cascade="all,delete-orphan",
+        foreign_keys="[Post.user_id]",
     )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
-        order_by="asc(Reply.date_created)",
+        order_by="desc(Reply.date_created)",
         cascade="all,delete-orphan",
+        foreign_keys="[Reply.user_id]",
     )
     following = orm.relationship(
         "User",
@@ -75,6 +88,9 @@ class User(SQLAlchemyBase):
 
     def __repr__(self):
         return f"user:{self.username}, id:{self.id}"
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 
 user_follow = sa.Table(

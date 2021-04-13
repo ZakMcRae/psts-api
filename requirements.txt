@@ -8,3 +8,4 @@ passlib[bcrypt]
 starlette
 requests
 email-validator
+pytest

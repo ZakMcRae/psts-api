@@ -11,23 +11,24 @@ class UserIn(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "username": "zak",
-                "email": "zak@example.com",
-                "password": "123456",
+                "username": "Matt",
+                "email": "matt@example.com",
+                "password": "password",
             }
         }
 
 
 class UserOut(BaseModel):
-    id: Optional[int] = None
     username: str
     email: EmailStr
+    id: Optional[int] = None
 
     class Config:
+        orm_mode = True
         schema_extra = {
             "example": {
-                "id": 1,
-                "username": "zak",
-                "email": "zak@example.com",
+                "id": 4376,
+                "username": "Matt",
+                "email": "matt@example.com",
             }
         }
