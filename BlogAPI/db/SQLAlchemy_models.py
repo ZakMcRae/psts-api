@@ -48,7 +48,7 @@ class Post(SQLAlchemyBase):
     )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
-        order_by="asc(Reply.date_created)",
+        order_by="desc(Reply.date_created)",
         cascade="all,delete-orphan",
     )
 
