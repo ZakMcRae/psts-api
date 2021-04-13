@@ -56,6 +56,7 @@ class PostOut(BaseModel):
     date_created: datetime
     date_modified: Optional[datetime]
     user_id: int
+    username: str
 
     class Config:
         orm_mode = True
@@ -67,6 +68,7 @@ class PostOut(BaseModel):
                 "date_created": "2021-04-07 19:41:00.769100",
                 "date_modified": "null",
                 "user_id": 4376,
+                "username": "Matt",
             }
         }
 
@@ -92,6 +94,7 @@ class UpdatePostOut(BaseModel):
     date_created: datetime
     date_modified: Optional[datetime]
     user_id: int
+    username: str
 
     class Config:
         orm_mode = True
@@ -103,17 +106,18 @@ class UpdatePostOut(BaseModel):
                 "date_created": "2021-04-07 19:41:00.769100",
                 "date_modified": "2021-04-08 19:43:00.769100",
                 "user_id": 4376,
+                "username": "Matt",
             }
         }
 
 
 class ReplyOut(BaseModel):
     id: int
-    title: str
     body: str
     date_created: datetime
     date_modified: Optional[datetime]
     user_id: int
+    username: str
 
     class Config:
         orm_mode = True
@@ -124,12 +128,6 @@ class ReplyOut(BaseModel):
                 "date_created": "2021-04-07 19:41:00.769100",
                 "date_modified": "null",
                 "user_id": 4376,
+                "username": "Matt",
             }
         }
-
-
-class FollowOut(BaseModel):
-    success: str
-
-    class Config:
-        schema_extra = {"example": {"success": "Matt now following Carin"}}
