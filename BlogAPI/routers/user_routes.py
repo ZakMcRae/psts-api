@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, APIRouter, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
+from sqlalchemy import desc, asc
 from starlette import status
 
 from BlogAPI.config import config_settings
@@ -12,7 +13,7 @@ from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
 from BlogAPI.pydantic_models.post_models import PostOut
 from BlogAPI.pydantic_models.reply_models import ReplyOut
-from BlogAPI.pydantic_models.user_models import UserIn, UserOut, UserItemList
+from BlogAPI.pydantic_models.user_models import UserIn, UserOut
 from BlogAPI.util.utils import get_current_user, validate_new_user, authenticate_user
 
 router = APIRouter()
@@ -77,13 +78,28 @@ def get_users_posts(
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
     session = db_session.create_session()
-    user = session.query(User).get(user_id)
-    user_posts: List[Post] = user.posts
 
-    if not sort_newest_first:
-        user_posts.sort(key=lambda post: post.date_created)
+    if sort_newest_first:
+        posts = (
+            session.query(Post)
+            .order_by(desc(Post.date_created))
+            .filter(Post.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
-    return user_posts[skip : skip + limit]
+    else:
+        posts = (
+            session.query(Post)
+            .order_by(asc(Post.date_created))
+            .filter(Post.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    return posts
 
 
 @router.get("/user/<user_id>/replies", response_model=List[ReplyOut])
@@ -94,13 +110,28 @@ def get_users_replies(
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
     session = db_session.create_session()
-    user = session.query(User).get(user_id)
-    user_replies: List[Reply] = user.replies
 
-    if not sort_newest_first:
-        user_replies.sort(key=lambda reply: reply.date_created)
+    if sort_newest_first:
+        replies = (
+            session.query(Reply)
+            .order_by(desc(Reply.date_created))
+            .filter(Reply.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
-    return user_replies[skip : skip + limit]
+    else:
+        replies = (
+            session.query(Reply)
+            .order_by(asc(Reply.date_created))
+            .filter(Reply.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    return replies
 
 
 @router.post(
