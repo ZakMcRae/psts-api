@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, constr, conint
+from pydantic import BaseModel, EmailStr, constr
 
 
 class UserIn(BaseModel):
@@ -30,21 +30,5 @@ class UserOut(BaseModel):
                 "id": 4376,
                 "username": "Matt",
                 "email": "matt@example.com",
-            }
-        }
-
-
-class UserItemList(BaseModel):
-    skip: Optional[conint(ge=0)] = 0
-    limit: Optional[conint(ge=0, le=100)] = 10
-    sort_newest_first: Optional[bool] = True
-
-    class Config:
-        orm_mode = True
-        schema_extra = {
-            "example": {
-                "skip": 0,
-                "limit": 10,
-                "sort_newest_first": True,
             }
         }
