@@ -2,11 +2,11 @@ import datetime
 from typing import List
 
 from fastapi import Depends, APIRouter, HTTPException, Query
-from sqlalchemy import desc
+from sqlalchemy import desc, asc
 from starlette import status
 
 from BlogAPI.db import db_session
-from BlogAPI.db.SQLAlchemy_models import Post
+from BlogAPI.db.SQLAlchemy_models import Post, Reply
 from BlogAPI.pydantic_models.post_models import (
     NewPostIn,
     PostOut,
@@ -95,13 +95,28 @@ def get_replies(
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
     session = db_session.create_session()
-    post = session.query(Post).get(post_id)
-    post_replies = post.replies
 
-    if not sort_newest_first:
-        post_replies.sort(key=lambda reply: reply.date_created)
+    if sort_newest_first:
+        replies = (
+            session.query(Reply)
+            .order_by(desc(Reply.date_created))
+            .filter(Reply.post_id == post_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
-    return post_replies[skip : skip + limit]
+    else:
+        replies = (
+            session.query(Reply)
+            .order_by(asc(Reply.date_created))
+            .filter(Reply.post_id == post_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    return replies
 
 
 @router.get("/posts/recent", response_model=List[PostOut])
