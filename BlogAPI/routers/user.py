@@ -10,7 +10,7 @@ from starlette import status
 from BlogAPI.config import config_settings
 from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
-from BlogAPI.pydantic_models.pydantic_models import UserIn, UserOut, PostOut, FollowOut
+from BlogAPI.pydantic_models.pydantic_models import UserIn, UserOut, PostOut, ReplyOut
 from BlogAPI.util.utils import get_current_user, validate_new_user, authenticate_user
 
 router = APIRouter()
@@ -55,6 +55,7 @@ def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": token, "token_type": "bearer"}
 
 
+# todo - documentation for token in headers on /docs and for other auth routes
 @router.get("/user/me", response_model=UserOut)
 def get_me(user=Depends(get_current_user)):
     return user
@@ -81,7 +82,7 @@ def get_users_posts(
     return user_posts[skip : skip + limit]
 
 
-@router.get("/user/<user_id>/replies")
+@router.get("/user/<user_id>/replies", response_model=List[ReplyOut])
 def get_users_replies(
     user_id: int, skip: int = 0, limit: int = 10, sort_newest_first: bool = True
 ):
@@ -95,7 +96,10 @@ def get_users_replies(
     return user_replies[skip : skip + limit]
 
 
-@router.post("/user/follow/<user_id>", response_model=FollowOut)
+@router.post(
+    "/user/follow/<user_id>",
+    responses={200: {"content": {"application/json": {"example": "success"}}}},
+)
 def follow_user(user_id, user=Depends(get_current_user)):
     session = db_session.create_session()
     user_to_follow: User = session.query(User).get(user_id)
@@ -109,9 +113,7 @@ def follow_user(user_id, user=Depends(get_current_user)):
     user_to_follow.followers += [user]
     session.commit()
 
-    resp = FollowOut(success=f"{user.username} now following {user_to_follow.username}")
-
-    return resp
+    return "success"
 
 
 @router.get("/user/<user_id>/followers", response_model=List[UserOut])
