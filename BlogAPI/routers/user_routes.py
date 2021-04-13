@@ -2,7 +2,7 @@ import datetime
 from typing import List
 
 import jwt
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
 from starlette import status
@@ -70,20 +70,28 @@ def get_user(user_id: int):
 
 
 @router.get("/user/<user_id>/posts", response_model=List[PostOut])
-def get_users_posts(user_id, user_input: UserItemList):
+def get_users_posts(
+    user_id: int,
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    sort_newest_first: bool = Query(True, alias="sort-newest-first"),
+):
     session = db_session.create_session()
     user = session.query(User).get(user_id)
     user_posts: List[Post] = user.posts
 
-    if not user_input.sort_newest_first:
+    if not sort_newest_first:
         user_posts.sort(key=lambda post: post.date_created)
 
-    return user_posts[user_input.skip : user_input.skip + user_input.limit]
+    return user_posts[skip : skip + limit]
 
 
 @router.get("/user/<user_id>/replies", response_model=List[ReplyOut])
 def get_users_replies(
-    user_id: int, skip: int = 0, limit: int = 10, sort_newest_first: bool = True
+    user_id: int,
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
     session = db_session.create_session()
     user = session.query(User).get(user_id)
