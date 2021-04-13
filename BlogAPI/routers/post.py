@@ -1,15 +1,10 @@
 import datetime
-from typing import List
 
-import jwt
 from fastapi import Depends, APIRouter, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from passlib.hash import bcrypt
 from starlette import status
 
-from BlogAPI.config import config_settings
 from BlogAPI.db import db_session
-from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
+from BlogAPI.db.SQLAlchemy_models import Post
 from BlogAPI.pydantic_models.pydantic_models import (
     NewPostIn,
     PostOut,
@@ -53,4 +48,37 @@ def update_post(post_id, updated_post: UpdatePostIn, user=Depends(get_current_us
     post.date_modified = datetime.datetime.utcnow()
 
     session.commit()
+    return post
+
+
+@router.delete(
+    "/post/<post_id>",
+    responses={200: {"content": {"application/json": {"example": "success"}}}},
+)
+def delete_post(post_id, user=Depends(get_current_user)):
+    session = db_session.create_session()
+
+    try:
+        post = session.query(Post).get(post_id)
+
+        if post.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="This post belongs to another user",
+            )
+
+    except AttributeError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="This post does not exist"
+        )
+
+    session.delete(post)
+    session.commit()
+    return "success"
+
+
+@router.get("/post/<post_id>", response_model=PostOut)
+def get_post(post_id):
+    session = db_session.create_session()
+    post = session.query(Post).get(post_id)
     return post
