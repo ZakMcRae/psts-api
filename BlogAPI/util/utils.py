@@ -27,6 +27,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         user_info = jwt.decode(token, config_settings.secret_key, algorithms=["HS256"])
         session = db_session.create_session()
         user = session.query(User).get(user_info.get("id"))
+        session.close()
         return user
 
     except HTTPException:
