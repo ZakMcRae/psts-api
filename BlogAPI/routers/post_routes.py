@@ -1,6 +1,8 @@
 import datetime
+from typing import List
 
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Query
+from sqlalchemy import desc
 from starlette import status
 
 from BlogAPI.db import db_session
@@ -11,6 +13,7 @@ from BlogAPI.pydantic_models.post_models import (
     UpdatePostIn,
     UpdatePostOut,
 )
+from BlogAPI.pydantic_models.reply_models import ReplyOut
 from BlogAPI.util.utils import get_current_user
 
 router = APIRouter()
@@ -82,3 +85,36 @@ def get_post(post_id):
     session = db_session.create_session()
     post = session.query(Post).get(post_id)
     return post
+
+
+@router.get("/post/<post_id>/replies", response_model=List[ReplyOut])
+def get_replies(
+    post_id: int,
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    sort_newest_first: bool = Query(True, alias="sort-newest-first"),
+):
+    session = db_session.create_session()
+    post = session.query(Post).get(post_id)
+    post_replies = post.replies
+
+    if not sort_newest_first:
+        post_replies.sort(key=lambda reply: reply.date_created)
+
+    return post_replies[skip : skip + limit]
+
+
+@router.get("/posts/recent", response_model=List[PostOut])
+def get_recent_posts(skip: int = 0, limit: int = Query(10, ge=0, le=25)):
+    session = db_session.create_session()
+    posts = (
+        session.query(Post)
+        .order_by(desc(Post.date_created))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    print(posts)
+
+    return posts
