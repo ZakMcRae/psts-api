@@ -21,6 +21,9 @@ class Reply(SQLAlchemyBase):
     )
     date_modified: datetime = sa.Column(sa.DATETIME)
     user_id = sa.Column(sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    username = sa.Column(
+        sa.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
+    )
     post_id = sa.Column(sa.ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
 
     def __eq__(self, other):
@@ -40,6 +43,9 @@ class Post(SQLAlchemyBase):
     )
     date_modified: datetime = sa.Column(sa.DATETIME)
     user_id = sa.Column(sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    username = sa.Column(
+        sa.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
+    )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
         order_by="asc(Reply.date_created)",
@@ -61,11 +67,13 @@ class User(SQLAlchemyBase):
         "Post",
         order_by="desc(Post.date_created)",
         cascade="all,delete-orphan",
+        foreign_keys="[Post.user_id]",
     )
     replies: Optional[List[Reply]] = orm.relationship(
         "Reply",
         order_by="desc(Reply.date_created)",
         cascade="all,delete-orphan",
+        foreign_keys="[Reply.user_id]",
     )
     following = orm.relationship(
         "User",
