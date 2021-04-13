@@ -11,7 +11,13 @@ from BlogAPI.dependencies.dependencies import oauth2_scheme
 
 def authenticate_user(username: str, password: str) -> User:
     session = db_session.create_session()
-    user = session.query(User).filter_by(username=username).first()
+    # user = session.query(User).filter_by(username=username).first()
+
+    user = (
+        session.query(User)
+        .filter(func.lower(User.username) == username.lower())
+        .first()
+    )
 
     if not user:
         return False
