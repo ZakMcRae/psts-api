@@ -130,6 +130,4 @@ def get_recent_posts(skip: int = 0, limit: int = Query(10, ge=0, le=25)):
         .all()
     )
 
-    print(posts)
-
     return posts
