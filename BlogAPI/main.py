@@ -1,4 +1,5 @@
 import fastapi
+from fastapi.openapi.utils import get_openapi
 import uvicorn
 
 from BlogAPI.db import db_session
@@ -22,6 +23,21 @@ def configure_routing():
     api.include_router(post_routes.router, tags=["Post"])
     api.include_router(reply_routes.router, tags=["Reply"])
 
+
+def custom_openapi():
+    if api.openapi_schema:
+        return api.openapi_schema
+    openapi_schema = get_openapi(
+        title="BlogAPI",
+        version="0.1",
+        description="## A Practice API - Backend endpoints for a blog\n Made by: [ZakMcRae - GitHub](https://github.com/ZakMcRae)",
+        routes=api.routes,
+    )
+    api.openapi_schema = openapi_schema
+    return api.openapi_schema
+
+
+api.openapi = custom_openapi
 
 if __name__ == "__main__":
     configure()
