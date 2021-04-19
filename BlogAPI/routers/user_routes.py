@@ -2,7 +2,7 @@ import datetime
 from typing import List
 
 import jwt
-from fastapi import Depends, APIRouter, HTTPException, Query
+from fastapi import Depends, APIRouter, HTTPException, Query, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
 from sqlalchemy import desc, asc
@@ -21,6 +21,12 @@ router = APIRouter()
 
 @router.post("/user", response_model=UserOut)
 def create_user(user_in: UserIn):
+    """
+    # Create a new user
+    Just pass a username, email and password in the request body.\\
+    The password is hashed, no plain text passwords are stored.\\
+    Stores their info in the database.
+    """
     if validate_new_user(user_in.username, user_in.email):
         hs_password = bcrypt.hash(user_in.password)
         user = User(
@@ -40,6 +46,11 @@ def create_user(user_in: UserIn):
 
 @router.post("/token")
 def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    # Generate token for user
+    Authorizes a user for create/update/delete or for other authorization required endpoints.\\
+    Can be passed to user via cookie or other method for login purposes when building a front end app.
+    """
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -60,23 +71,46 @@ def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 # todo - documentation for token in headers on /docs and for other auth routes
 @router.get("/user/me", response_model=UserOut)
 def get_me(user=Depends(get_current_user)):
+    """
+    # Returns current user info
+    Queries database for current user information base on token provided.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
     return user
 
 
-@router.get("/user/<user_id>", response_model=UserOut)
+@router.get("/user/<user-id>", response_model=UserOut)
 def get_user(user_id: int):
+    """
+    # Returns specified users info
+    Based off of user id provided
+    """
     session = db_session.create_session()
     user = session.query(User).get(user_id)
     return user
 
 
-@router.get("/user/<user_id>/posts", response_model=List[PostOut])
+@router.get("/user/<user-id>/posts", response_model=List[PostOut])
 def get_users_posts(
     user_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
+    """
+    # Returns a list of specified users posts
+    Use skip and limit for pagination.\\
+    Sortable by date created (by default returns newest).
+    """
     session = db_session.create_session()
 
     if sort_newest_first:
@@ -102,13 +136,18 @@ def get_users_posts(
     return posts
 
 
-@router.get("/user/<user_id>/replies", response_model=List[ReplyOut])
+@router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
 def get_users_replies(
     user_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
+    """
+    # Returns a list of specified users replies
+    Use skip and limit for pagination.\\
+    Sortable by date created (by default returns newest).
+    """
     session = db_session.create_session()
 
     if sort_newest_first:
@@ -135,10 +174,13 @@ def get_users_replies(
 
 
 @router.post(
-    "/user/follow/<user_id>",
+    "/user/follow/<user-id>",
     responses={200: {"content": {"application/json": {"example": "success"}}}},
 )
 def follow_user(user_id, user=Depends(get_current_user)):
+    """
+    # Makes current user follow specified user
+    """
     session = db_session.create_session()
     user_to_follow: User = session.query(User).get(user_id)
 
@@ -154,15 +196,21 @@ def follow_user(user_id, user=Depends(get_current_user)):
     return "success"
 
 
-@router.get("/user/<user_id>/followers", response_model=List[UserOut])
+@router.get("/user/<user-id>/followers", response_model=List[UserOut])
 def get_followers(user_id):
+    """
+    # Returns a list of all followers of current user
+    """
     session = db_session.create_session()
     user = session.query(User).get(user_id)
     return user.followers
 
 
-@router.get("/user/<user_id>/following", response_model=List[UserOut])
+@router.get("/user/<user-id>/following", response_model=List[UserOut])
 def get_following(user_id):
+    """
+    # Returns a list of all users that the current user is following
+    """
     session = db_session.create_session()
     user = session.query(User).get(user_id)
     return user.following

@@ -21,6 +21,20 @@ router = APIRouter()
 
 @router.post("/post", response_model=PostOut)
 def create_post(new_post: NewPostIn, user=Depends(get_current_user)):
+    """
+    # Create a new post
+    Stores post into database.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
     session = db_session.create_session()
     post = Post(
         title=new_post.title,
@@ -32,8 +46,22 @@ def create_post(new_post: NewPostIn, user=Depends(get_current_user)):
     return post
 
 
-@router.put("/post/<post_id>", response_model=UpdatePostOut)
+@router.put("/post/<post-id>", response_model=UpdatePostOut)
 def update_post(post_id, updated_post: UpdatePostIn, user=Depends(get_current_user)):
+    """
+    # Update specified post
+    Updates post into database.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
     session = db_session.create_session()
     post = session.query(Post).get(post_id)
 
@@ -55,10 +83,24 @@ def update_post(post_id, updated_post: UpdatePostIn, user=Depends(get_current_us
 
 
 @router.delete(
-    "/post/<post_id>",
+    "/post/<post-id>",
     responses={200: {"content": {"application/json": {"example": "success"}}}},
 )
 def delete_post(post_id, user=Depends(get_current_user)):
+    """
+    # Delete specified post
+    Deletes post and all replies to the post from the database.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
     session = db_session.create_session()
 
     try:
@@ -80,20 +122,28 @@ def delete_post(post_id, user=Depends(get_current_user)):
     return "success"
 
 
-@router.get("/post/<post_id>", response_model=PostOut)
+@router.get("/post/<post-id>", response_model=PostOut)
 def get_post(post_id):
+    """
+    # Return specified post
+    """
     session = db_session.create_session()
     post = session.query(Post).get(post_id)
     return post
 
 
-@router.get("/post/<post_id>/replies", response_model=List[ReplyOut])
+@router.get("/post/<post-id>/replies", response_model=List[ReplyOut])
 def get_replies(
     post_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
 ):
+    """
+    # Returns all replies to specified post
+    Use skip and limit for pagination.\\
+    Sortable by date created (by default returns newest).
+    """
     session = db_session.create_session()
 
     if sort_newest_first:
@@ -121,6 +171,10 @@ def get_replies(
 
 @router.get("/posts/recent", response_model=List[PostOut])
 def get_recent_posts(skip: int = 0, limit: int = Query(10, ge=0, le=25)):
+    """
+    # Returns list of recent posts from all users
+    Useful for a home/front page blog site before login
+    """
     session = db_session.create_session()
     posts = (
         session.query(Post)
