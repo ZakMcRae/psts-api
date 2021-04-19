@@ -13,7 +13,7 @@ from BlogAPI.pydantic_models.post_models import (
     UpdatePostIn,
     UpdatePostOut,
 )
-from BlogAPI.pydantic_models.reply_models import ReplyOut
+from BlogAPI.pydantic_models.reply_models import ReplyOut, NewReplyIn
 from BlogAPI.util.utils import get_current_user
 
 router = APIRouter()
@@ -40,6 +40,7 @@ def create_post(new_post: NewPostIn, user=Depends(get_current_user)):
         title=new_post.title,
         body=new_post.body,
         user_id=user.id,
+        username=user.username,
     )
     session.add(post)
     session.commit()
@@ -130,6 +131,34 @@ def get_post(post_id):
     session = db_session.create_session()
     post = session.query(Post).get(post_id)
     return post
+
+
+@router.post("/post/post-id/reply", response_model=ReplyOut)
+def create_reply(post_id: int, new_reply: NewReplyIn, user=Depends(get_current_user)):
+    """
+    # Create new reply
+    Creates reply to specified post and stores it in the database.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
+    session = db_session.create_session()
+    reply = Reply(
+        body=new_reply.body,
+        user_id=user.id,
+        username=user.username,
+        post_id=post_id,
+    )
+    session.add(reply)
+    session.commit()
+    return reply
 
 
 @router.get("/post/<post-id>/replies", response_model=List[ReplyOut])

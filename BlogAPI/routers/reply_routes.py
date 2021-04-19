@@ -7,40 +7,12 @@ from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import Reply
 from BlogAPI.pydantic_models.reply_models import (
     ReplyOut,
-    NewReplyIn,
     UpdateReplyOut,
     UpdateReplyIn,
 )
 from BlogAPI.util.utils import get_current_user
 
 router = APIRouter()
-
-
-# todo - not tied to specific post - maybe move to post/reply?
-@router.post("/reply", response_model=ReplyOut)
-def create_reply(new_reply: NewReplyIn, user=Depends(get_current_user)):
-    """
-    # Create new reply
-    Creates reply and stores it in the database.
-
-    ---
-
-    ### Authorization Header
-    Must include:
-    ```
-    {
-        "Authorization": "Bearer {token}"
-    }
-    ```
-    """
-    session = db_session.create_session()
-    reply = Reply(
-        body=new_reply.body,
-        user_id=user.id,
-    )
-    session.add(reply)
-    session.commit()
-    return reply
 
 
 @router.put("/reply/<reply-id>", response_model=UpdateReplyOut)
