@@ -1,20 +1,25 @@
 import fastapi
-from fastapi.openapi.utils import get_openapi
 import uvicorn
+from fastapi import Depends
+from fastapi.openapi.utils import get_openapi
+from sqlalchemy.orm import Session
 
-from BlogAPI.db import db_session
+from BlogAPI.db.SQLAlchemy_models import User
+from BlogAPI.db.db_session import Base, engine
+from BlogAPI.dependencies.dependencies import get_db
 from BlogAPI.routers import temp_routes, user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
 
 
+# todo - delete this test route
+@api.get("/get_user_test")
+def get_user_test(user_id: int, db: Session = Depends(get_db)):
+    return db.query(User).get(user_id)
+
+
 def configure():
-    configure_db()
     configure_routing()
-
-
-def configure_db():
-    db_session.global_init()
 
 
 def configure_routing():
@@ -40,6 +45,7 @@ def custom_openapi():
 api.openapi = custom_openapi
 
 if __name__ == "__main__":
+    Base.metadata.create_all(bind=engine)
     configure()
     uvicorn.run("main:api", host="127.0.0.1", port=8000, reload=True)
 else:
