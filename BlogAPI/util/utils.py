@@ -1,23 +1,19 @@
 import jwt
 from fastapi import Depends, HTTPException
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 from starlette import status
 
 from BlogAPI.config import config_settings
-from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.dependencies.dependencies import oauth2_scheme
 
 
-def authenticate_user(username: str, password: str) -> User:
-    session = db_session.create_session()
-
-    user = (
-        session.query(User)
-        .filter(func.lower(User.username) == username.lower())
-        .first()
-    )
-
+def authenticate_user(db: Session, username: str, password: str) -> User:
+    """
+    Make sure username is in database and password matches hashed password in database
+    """
+    user = db.query(User).filter(func.lower(User.username) == username.lower()).first()
     if not user:
         return False
 
@@ -27,13 +23,13 @@ def authenticate_user(username: str, password: str) -> User:
     return user
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(db: Session, token: str = Depends(oauth2_scheme)) -> User:
+    """
+    Returns User object based on user_id stored in token(JWT)
+    """
     try:
         user_info = jwt.decode(token, config_settings.secret_key, algorithms=["HS256"])
-        session = db_session.create_session()
-        user = session.query(User).get(user_info.get("id"))
-        session.close()
-        return user
+        return db.query(User).get(user_info.get("id"))
 
     except HTTPException:
         return HTTPException(
@@ -42,11 +38,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         )
 
 
-def validate_new_user(username: str, email: str):
-    session = db_session.create_session()
+def validate_new_user(db: Session, username: str, email: str) -> bool:
+    """
+    Makes sure username and email are not already taken in database
+    """
 
     db_username = (
-        session.query(User.username)
+        db.query(User.username)
         .filter(func.lower(User.username) == username.lower())
         .scalar()
     )
@@ -57,9 +55,7 @@ def validate_new_user(username: str, email: str):
         )
 
     db_email = (
-        session.query(User.email)
-        .filter(func.lower(User.email) == email.lower())
-        .scalar()
+        db.query(User.email).filter(func.lower(User.email) == email.lower()).scalar()
     )
     if db_email:
         raise HTTPException(
