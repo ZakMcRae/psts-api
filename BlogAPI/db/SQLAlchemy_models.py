@@ -4,12 +4,10 @@ from typing import Optional, List
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from passlib.hash import bcrypt
-from sqlalchemy.ext.declarative import declarative_base
-
-SQLAlchemyBase = declarative_base()
+from BlogAPI.db.db_session import Base
 
 
-class Reply(SQLAlchemyBase):
+class Reply(Base):
     __tablename__ = "replies"
 
     id: int = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
@@ -30,7 +28,7 @@ class Reply(SQLAlchemyBase):
         return self.id == other.id
 
 
-class Post(SQLAlchemyBase):
+class Post(Base):
     __tablename__ = "posts"
 
     id: int = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
@@ -56,7 +54,7 @@ class Post(SQLAlchemyBase):
         return self.id == other.id
 
 
-class User(SQLAlchemyBase):
+class User(Base):
     __tablename__ = "users"
 
     id: int = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
@@ -95,7 +93,7 @@ class User(SQLAlchemyBase):
 
 user_follow = sa.Table(
     "user_follow",
-    SQLAlchemyBase.metadata,
+    Base.metadata,
     sa.Column("user_id", sa.Integer, sa.ForeignKey(User.id), primary_key=True),
     sa.Column("following_id", sa.Integer, sa.ForeignKey(User.id), primary_key=True),
 )
