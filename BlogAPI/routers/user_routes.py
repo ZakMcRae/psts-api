@@ -180,6 +180,16 @@ def get_users_replies(
 def follow_user(user_id, user=Depends(get_current_user)):
     """
     # Makes current user follow specified user
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
     """
     session = db_session.create_session()
     user_to_follow: User = session.query(User).get(user_id)
