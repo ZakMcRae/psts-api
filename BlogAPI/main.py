@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.db.db_session import Base, engine
 from BlogAPI.dependencies.dependencies import get_db
-from BlogAPI.routers import temp_routes, user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
 
@@ -23,10 +22,11 @@ def configure():
 
 
 def configure_routing():
-    api.include_router(temp_routes.router, tags=["Temp"])
-    api.include_router(user_routes.router, tags=["User"])
-    api.include_router(post_routes.router, tags=["Post"])
-    api.include_router(reply_routes.router, tags=["Reply"])
+    # api.include_router(temp_routes.router, tags=["Temp"])
+    # api.include_router(user_routes.router, tags=["User"])
+    # api.include_router(post_routes.router, tags=["Post"])
+    # api.include_router(reply_routes.router, tags=["Reply"])
+    pass
 
 
 def custom_openapi():
