@@ -13,7 +13,7 @@ def test_authenticate_user():
     db: Session = TestingSessionLocal()
 
     # successful test case user info
-    username = "zak"
+    username = "zaktest"
     password = "123"
     authenticated_user = authenticate_user(db, username, password)
 
@@ -30,7 +30,7 @@ def test_authenticate_user():
     assert authenticated_user is False
 
     # wrong password case
-    username = "zak"
+    username = "zaktest"
     password = "password"
     authenticated_user = authenticate_user(db, username, password)
     assert authenticated_user is False
@@ -46,14 +46,14 @@ def test_get_current_user(monkeypatch):
     # successful test case
     # monkeypatch jwt.decode() to return mock user_info - to avoid using a real token
     def mock_return(*args, **kwargs):
-        user_info = {"id": 1, "username": "zak", "exp": 1621605216}
+        user_info = {"id": 1, "username": "zaktest", "exp": 1621605216}
         return user_info
 
     monkeypatch.setattr(jwt, "decode", mock_return)
 
     user = get_current_user(db, "fake token")
-    assert user.username == "zak"
-    assert user.email == "zak@example.com"
+    assert user.username == "zaktest"
+    assert user.email == "zaktest@example.com"
 
 
 def test_validate_new_user():
@@ -61,11 +61,11 @@ def test_validate_new_user():
 
     # fail case invalid username
     with pytest.raises(HTTPException):
-        validate_new_user(db, "zak", "jim@example.com")
+        validate_new_user(db, "zaktest", "jim@example.com")
 
     # fail case invalid email
     with pytest.raises(HTTPException):
-        validate_new_user(db, "jim", "zak@example.com")
+        validate_new_user(db, "jim", "zaktest@example.com")
 
     # test valid email and username
     assert validate_new_user(db, "jim", "jim@example.com") is True
