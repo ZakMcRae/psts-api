@@ -8,9 +8,10 @@ from starlette import status
 
 import BlogAPI.util.crud as crud
 from BlogAPI.config import config_settings
+from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.dependencies.dependencies import get_db
-from BlogAPI.pydantic_models.user_models import UserOut
-from BlogAPI.util.utils import authenticate_user
+from BlogAPI.pydantic_models.user_models import UserOut, UserIn
+from BlogAPI.util.utils import authenticate_user, validate_new_user
 
 router = APIRouter()
 
@@ -48,34 +49,19 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     # Returns specified user
     Based off of user id provided
     """
-    return crud.get_user(db, user_id)
+    return crud.read_user(db, user_id)
 
 
-# @router.post("/user", response_model=UserOut)
-# def create_user(user_in: UserIn):
-#     """
-#     # Create a new user
-#     Just pass a username, email and password in the request body.\\
-#     The password is hashed, no plain text passwords are stored.\\
-#     Stores their info in the database.
-#     """
-#     if validate_new_user(user_in.username, user_in.email):
-#         hs_password = bcrypt.hash(user_in.password)
-#         user = User(
-#             username=user_in.username,
-#             email=user_in.email,
-#             hs_password=hs_password,
-#         )
-#
-#         session = db_session.create_session()
-#         session.add(user)
-#         session.commit()
-#         return user
-#
-#     else:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#
-#
+@router.post("/user", response_model=UserOut)
+def create_user(user_in: UserIn, db: Session = Depends(get_db)):
+    """
+    # Create new user
+    The password is hashed, no plain text passwords are stored.\\
+    Stores user info in the database.
+    """
+    return crud.create_user(db, user_in)
+
+
 # @router.get("/user/me", response_model=UserOut)
 # def get_me(user=Depends(get_current_user)):
 #     """
@@ -93,8 +79,8 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 #     ```
 #     """
 #     return user
-#
-#
+
+
 # @router.get("/user/<user-id>/posts", response_model=List[PostOut])
 # def get_users_posts(
 #     user_id: int,
