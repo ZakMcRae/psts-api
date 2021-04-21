@@ -7,14 +7,9 @@ from sqlalchemy.orm import Session
 from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.db.db_session import Base, engine
 from BlogAPI.dependencies.dependencies import get_db
+from BlogAPI.routers import user_routes
 
 api = fastapi.FastAPI()
-
-
-# todo - delete this test route
-@api.get("/get_user_test")
-def get_user_test(user_id: int, db: Session = Depends(get_db)):
-    return db.query(User).get(user_id)
 
 
 def configure():
@@ -23,7 +18,7 @@ def configure():
 
 def configure_routing():
     # api.include_router(temp_routes.router, tags=["Temp"])
-    # api.include_router(user_routes.router, tags=["User"])
+    api.include_router(user_routes.router, tags=["User"])
     # api.include_router(post_routes.router, tags=["Post"])
     # api.include_router(reply_routes.router, tags=["Reply"])
     pass
