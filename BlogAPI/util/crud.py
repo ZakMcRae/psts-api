@@ -11,7 +11,7 @@ def get_user(db: Session, user_id: int):
 
 
 def create_user(db: Session, user: UserIn):
-    if validate_new_user(user.username, user.email):
+    if validate_new_user(db, user.username, user.email):
         hs_password = bcrypt.hash(user.password)
         user = User(
             username=user.username,
@@ -23,10 +23,3 @@ def create_user(db: Session, user: UserIn):
         db.commit()
         db.refresh(user)
         return user
-
-
-# todo - add rest of crud operations
-# take queries from endpoints
-# move into these functions
-
-# can more simply overwrite dependencies for testing
