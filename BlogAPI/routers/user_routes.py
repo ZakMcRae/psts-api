@@ -8,10 +8,9 @@ from starlette import status
 
 import BlogAPI.util.crud as crud
 from BlogAPI.config import config_settings
-from BlogAPI.db.SQLAlchemy_models import User
-from BlogAPI.dependencies.dependencies import get_db
+from BlogAPI.dependencies.dependencies import get_db, get_current_user
 from BlogAPI.pydantic_models.user_models import UserOut, UserIn
-from BlogAPI.util.utils import authenticate_user, validate_new_user
+from BlogAPI.util.utils import authenticate_user
 
 router = APIRouter()
 
@@ -62,23 +61,23 @@ def create_user(user_in: UserIn, db: Session = Depends(get_db)):
     return crud.create_user(db, user_in)
 
 
-# @router.get("/user/me", response_model=UserOut)
-# def get_me(user=Depends(get_current_user)):
-#     """
-#     # Returns current user info
-#     Queries database for current user information base on token provided.
-#
-#     ---
-#
-#     ### Authorization Header
-#     Must include:
-#     ```
-#     {
-#         "Authorization": "Bearer {token}"
-#     }
-#     ```
-#     """
-#     return user
+@router.get("/user/me", response_model=UserOut)
+def get_me(user=Depends(get_current_user)):
+    """
+    # Returns current user info
+    Queries database for current user information base on token provided.
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
+    return user
 
 
 # @router.get("/user/<user-id>/posts", response_model=List[PostOut])
