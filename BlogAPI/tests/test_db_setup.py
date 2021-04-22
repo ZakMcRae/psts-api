@@ -8,8 +8,9 @@ from BlogAPI.dependencies.dependencies import get_db
 from BlogAPI.main import api
 
 # This points the api/test client to test.db instead of blog.db
-
-SQLALCHEMY_DATABASE_URL = "sqlite:///test.db"
+SQLALCHEMY_DATABASE_URL = (
+    r"sqlite:///C:\Users\Zak\PycharmProjects\BlogAPI\BlogAPI\tests\test.db"
+)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
