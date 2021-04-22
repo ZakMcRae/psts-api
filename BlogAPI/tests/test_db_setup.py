@@ -1,6 +1,7 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from BlogAPI.db.SQLAlchemy_models import Base
 from BlogAPI.dependencies.dependencies import get_db
@@ -29,6 +30,21 @@ def override_get_db():
         yield db
     finally:
         db.close()
+
+
+@pytest.fixture
+def db_non_commit(monkeypatch):
+    """
+    changes SQLAlchemy orm behaviours
+    this does not allow any changes to be made to the test db
+    """
+
+    def mock_return(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(Session, "add", mock_return)
+    monkeypatch.setattr(Session, "commit", mock_return)
+    monkeypatch.setattr(Session, "refresh", mock_return)
 
 
 api.dependency_overrides[get_db] = override_get_db
