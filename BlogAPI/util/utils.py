@@ -1,13 +1,9 @@
-import jwt
-from fastapi import Depends, HTTPException
-from jwt import DecodeError, ExpiredSignatureError
+from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette import status
 
-from BlogAPI.config import config_settings
 from BlogAPI.db.SQLAlchemy_models import User
-from BlogAPI.dependencies.dependencies import oauth2_scheme
 
 
 def authenticate_user(db: Session, username: str, password: str) -> User:
@@ -22,33 +18,6 @@ def authenticate_user(db: Session, username: str, password: str) -> User:
         return False
 
     return user
-
-
-def get_current_user(db: Session, token: str = Depends(oauth2_scheme)) -> User:
-    """
-    Returns User object based on user_id stored in token(JWT)
-    """
-    try:
-        user_info = jwt.decode(token, config_settings.secret_key, algorithms=["HS256"])
-        return db.query(User).get(user_info.get("id"))
-
-    except HTTPException:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Username or Password",
-        )
-
-    except DecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
-
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token is expired",
-        )
 
 
 def validate_new_user(db: Session, username: str, email: str) -> bool:
