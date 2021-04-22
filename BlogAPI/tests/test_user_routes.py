@@ -100,7 +100,9 @@ def test_get_me(monkeypatch):
 
     # fail case - expired token
     # token stored outside of git in test_info.json
-    with open("test_info.json") as fin:
+    with open(
+        r"C:\Users\Zak\PycharmProjects\BlogAPI\BlogAPI\tests\test_info.json"
+    ) as fin:
         test_info = json.load(fin)
 
     header = {"Authorization": f"Bearer {test_info.get('expired_test_token')}"}
