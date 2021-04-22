@@ -1,6 +1,10 @@
-from BlogAPI.tests.test_db_setup import client
-from sqlalchemy.orm import Session
 import json
+
+import pytest
+from sqlalchemy.orm import Session
+
+from BlogAPI.tests.test_db_setup import client, db_non_commit
+from fastapi.exceptions import HTTPException
 
 
 def test_generate_token():
@@ -30,6 +34,7 @@ def test_generate_token():
     }
     resp = client.post("/token", body, headers=header)
     assert resp.status_code == 401
+    assert resp.json() == {"detail": "Invalid Username or Password"}
 
     # wrong password case
     body = {
@@ -42,13 +47,13 @@ def test_generate_token():
     }
     resp = client.post("/token", body, headers=header)
     assert resp.status_code == 401
+    assert resp.json() == {"detail": "Invalid Username or Password"}
 
 
 def test_get_user():
     # successful test case
     resp = client.get("/user/<user-id>?user_id=1")
 
-    # successful test case
     assert resp.status_code == 200
     assert resp.json() == {
         "username": "zaktest",
@@ -57,18 +62,23 @@ def test_get_user():
     }
 
 
-def test_create_user(monkeypatch):
+def test_create_user(db_non_commit):
     # successful test case
-    def mock_return(*args, **kwargs):
-        pass
-
-    monkeypatch.setattr(Session, "add", mock_return)
-    monkeypatch.setattr(Session, "commit", mock_return)
-    monkeypatch.setattr(Session, "refresh", mock_return)
-
     body = {"username": "zoetest", "email": "zoetest@example.com", "password": 123}
     resp = client.post("/user", json.dumps(body))
-
+    user_info = resp.json()
     assert resp.status_code == 200
+    assert user_info.get("username") == "zoetest"
+    assert user_info.get("email") == "zoetest@example.com"
 
-    # todo other test cases
+    # taken username case
+    body = {"username": "zaktest", "email": "zoetest@example.com", "password": 123}
+    resp = client.post("/user", json.dumps(body))
+    assert resp.status_code == 409
+    assert resp.json() == {"detail": "Username is taken, please try another"}
+
+    # taken email case
+    body = {"username": "zoetest", "email": "zaktest@example.com", "password": 123}
+    resp = client.post("/user", json.dumps(body))
+    assert resp.status_code == 409
+    assert resp.json() == {"detail": "Email is taken, please try another"}
