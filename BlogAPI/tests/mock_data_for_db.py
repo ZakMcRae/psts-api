@@ -129,7 +129,9 @@ def rebuild_test_db():
     """
 
     # drop tables and then recreate
+    print("Drop all tables")
     Base.metadata.drop_all(bind=engine)
+    print("Create all tables")
     Base.metadata.create_all(bind=engine)
 
     # add mock data
