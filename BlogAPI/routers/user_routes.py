@@ -20,7 +20,18 @@ from BlogAPI.util.utils import authenticate_user, validate_new_user
 router = APIRouter()
 
 
-@router.post("/token")
+@router.post(
+    "/token",
+    responses={
+        200: {
+            "content": {
+                "application/json": {
+                    "example": {"access_token": "token", "token_type": "bearer"}
+                }
+            }
+        }
+    },
+)
 def generate_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
@@ -173,7 +184,9 @@ def get_users_replies(
 
 @router.post(
     "/user/follow/<user-id>",
-    responses={200: {"content": {"application/json": {"example": "success"}}}},
+    responses={
+        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+    },
 )
 def follow_user(user_id, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """
