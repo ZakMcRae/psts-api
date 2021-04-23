@@ -2,7 +2,14 @@ import json
 
 import jwt
 
-from BlogAPI.tests.test_db_setup import client, db_non_commit
+from BlogAPI.dependencies.dependencies import get_current_user
+from BlogAPI.main import api
+from BlogAPI.tests.test_setup_and_utils import (
+    client,
+    db_non_commit,
+    override_get_current_user_zak,
+    override_get_current_user_elliot,
+)
 
 
 def test_generate_token():
@@ -128,3 +135,102 @@ def test_get_me(monkeypatch):
         "email": "zaktest@example.com",
         "id": 1,
     }
+
+
+def test_get_users_posts():
+    # successful case - id:1, skip:1, limit:3, sort:new first
+    resp = client.get(
+        "/user/<user-id>/posts?user_id=1&skip=1&limit=3&sort-newest-first=true"
+    )
+    posts = resp.json()
+
+    assert resp.status_code == 200
+    assert posts[0].get("title") == "zaktest's post #4"
+    assert posts[2].get("title") == "zaktest's post #2"
+
+    # successful case - id:3, skip:0, limit:5, sort:old first
+    resp = client.get(
+        "/user/<user-id>/posts?user_id=3&skip=0&limit=5&sort-newest-first=false"
+    )
+    posts = resp.json()
+
+    assert resp.status_code == 200
+    assert posts[0].get("title") == "theotest's post #1"
+    assert posts[4].get("title") == "theotest's post #5"
+
+
+def test_get_users_replies():
+    # successful case - id:1, skip:1, limit:3, sort:new first
+    resp = client.get(
+        "/user/<user-id>/replies?user_id=1&skip=1&limit=3&sort-newest-first=true"
+    )
+    replies = resp.json()
+
+    assert resp.status_code == 200
+    assert replies[0].get("body") == "This is a reply of mock data. Reply #19"
+    assert replies[2].get("body") == "This is a reply of mock data. Reply #17"
+
+    # successful case - id:3, skip:0, limit:5, sort:old first
+    resp = client.get(
+        "/user/<user-id>/replies?user_id=3&skip=0&limit=5&sort-newest-first=false"
+    )
+    replies = resp.json()
+
+    assert resp.status_code == 200
+    assert replies[0].get("body") == "This is a reply of mock data. Reply #1"
+    assert replies[4].get("body") == "This is a reply of mock data. Reply #5"
+
+
+def test_follow_user(db_non_commit):
+    # fail case - user already followed
+    # mock authorization - return user directly
+    api.dependency_overrides[get_current_user] = override_get_current_user_zak
+    resp = client.post("/user/follow/<user-id>?user_id=2")
+
+    assert resp.status_code == 409
+    assert resp.json() == {"detail": "User already followed"}
+
+    # successful case
+    # mock authorization - return user directly
+    api.dependency_overrides[get_current_user] = override_get_current_user_elliot
+    resp = client.post("/user/follow/<user-id>?user_id=3")
+
+    assert resp.status_code == 200
+    assert resp.json() == {"detail": "success"}
+
+    # delete dependency overwrite - don't want to conflict with other tests
+    del api.dependency_overrides[get_current_user]
+
+
+def test_get_followers():
+    # successful case - user with followers
+    resp = client.get("/user/<user-id>/followers?user_id=1")
+    followers = resp.json()
+
+    assert resp.status_code == 200
+    assert followers[0].get("username") == "jesstest"
+    assert followers[1].get("username") == "theotest"
+
+    # successful case - user with no followers
+    resp = client.get("/user/<user-id>/followers?user_id=4")
+    followers = resp.json()
+
+    assert resp.status_code == 200
+    assert len(followers) == 0
+
+
+def test_get_following():
+    # successful case - user a following
+    resp = client.get("/user/<user-id>/followers?user_id=2")
+    following = resp.json()
+
+    assert resp.status_code == 200
+    assert following[0].get("username") == "zaktest"
+    assert following[1].get("username") == "theotest"
+
+    # successful case - user with no followers
+    resp = client.get("/user/<user-id>/followers?user_id=4")
+    following = resp.json()
+
+    assert resp.status_code == 200
+    assert len(following) == 0
