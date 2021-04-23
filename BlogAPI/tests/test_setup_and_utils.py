@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from BlogAPI.db.SQLAlchemy_models import Base
+from BlogAPI.db.SQLAlchemy_models import Base, User
 from BlogAPI.dependencies.dependencies import get_db
 from BlogAPI.main import api
 
@@ -26,11 +26,32 @@ Base.metadata.create_all(bind=engine)
 
 
 def override_get_db():
+    # for fastapi dependency overrides - give test db instead of blog db
     try:
         db = TestingSessionLocal()
         yield db
     finally:
         db.close()
+
+
+def override_get_current_user_zak():
+    # for fastapi dependency overrides - skip authentication for tests
+    return User(
+        id=1,
+        username="zaktest",
+        email="zaktest@example.com",
+        hs_password="$2b$12$avqsZP6Gt1Ixgxd7C9BQFe/I44yAm4sqklNUl9DFbyUhLBRzDQtCK",
+    )
+
+
+def override_get_current_user_elliot():
+    # for fastapi dependency overrides - skip authentication for tests
+    return User(
+        id=4,
+        username="elliottest",
+        email="elliottest@example.com",
+        hs_password="$2b$12$avqsZP6Gt1Ixgxd7C9BQFe/I44yAm4sqklNUl9DFbyUhLBRzDQtCK",
+    )
 
 
 @pytest.fixture
