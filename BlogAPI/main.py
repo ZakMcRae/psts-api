@@ -1,15 +1,11 @@
 import fastapi
 import uvicorn
-from fastapi import Depends
 from fastapi.openapi.utils import get_openapi
-from sqlalchemy.orm import Session
-
-from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.db.db_session import Base, engine
-from BlogAPI.dependencies.dependencies import get_db
 from BlogAPI.routers import user_routes, post_routes
 
 api = fastapi.FastAPI()
+# todo - do a pass of endpoint status codes - ie delete should be 204 not 200
 
 
 def configure():
