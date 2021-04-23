@@ -3,14 +3,15 @@ import datetime
 import jwt
 from fastapi import Depends, APIRouter, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from passlib.hash import bcrypt
 from sqlalchemy.orm import Session
 from starlette import status
 
-import BlogAPI.util.crud as crud
 from BlogAPI.config import config_settings
+from BlogAPI.db.SQLAlchemy_models import User
 from BlogAPI.dependencies.dependencies import get_db, get_current_user
 from BlogAPI.pydantic_models.user_models import UserOut, UserIn
-from BlogAPI.util.utils import authenticate_user
+from BlogAPI.util.utils import authenticate_user, validate_new_user
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     # Returns specified user
     Based off of user id provided
     """
-    return crud.read_user(db, user_id)
+    return db.query(User).filter(User.id == user_id).first()
 
 
 @router.post("/user", response_model=UserOut)
@@ -58,7 +59,21 @@ def create_user(user_in: UserIn, db: Session = Depends(get_db)):
     The password is hashed, no plain text passwords are stored.\\
     Stores user info in the database.
     """
-    return crud.create_user(db, user_in)
+    if validate_new_user(db, user_in.username, user_in.email):
+        hs_password = bcrypt.hash(user_in.password)
+        user = User(
+            username=user_in.username,
+            email=user_in.email,
+            hs_password=hs_password,
+        )
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    else:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @router.get("/user/me", response_model=UserOut)
