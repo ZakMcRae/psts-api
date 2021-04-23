@@ -3,7 +3,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 
 from BlogAPI.db.SQLAlchemy_models import User
-from BlogAPI.tests.test_db_setup import TestingSessionLocal
+from BlogAPI.tests.test_setup_and_utils import TestingSessionLocal
 from BlogAPI.util.utils import validate_new_user, authenticate_user
 
 
