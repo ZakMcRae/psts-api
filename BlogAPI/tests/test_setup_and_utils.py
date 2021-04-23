@@ -65,6 +65,7 @@ def db_non_commit(monkeypatch):
         pass
 
     monkeypatch.setattr(Session, "add", mock_return)
+    monkeypatch.setattr(Session, "delete", mock_return)
     monkeypatch.setattr(Session, "commit", mock_return)
     monkeypatch.setattr(Session, "refresh", mock_return)
 
