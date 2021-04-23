@@ -1,7 +1,7 @@
 from passlib.hash import bcrypt
 
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
-from BlogAPI.tests.test_db_setup import TestingSessionLocal, Base, engine
+from BlogAPI.tests.test_setup_and_utils import TestingSessionLocal, Base, engine
 
 session = TestingSessionLocal()
 
