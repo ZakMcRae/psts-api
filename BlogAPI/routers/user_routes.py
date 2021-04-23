@@ -1,15 +1,19 @@
 import datetime
+from typing import List
 
 import jwt
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
+from sqlalchemy import desc, asc
 from sqlalchemy.orm import Session
 from starlette import status
 
 from BlogAPI.config import config_settings
-from BlogAPI.db.SQLAlchemy_models import User
+from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
 from BlogAPI.dependencies.dependencies import get_db, get_current_user
+from BlogAPI.pydantic_models.post_models import PostOut
+from BlogAPI.pydantic_models.reply_models import ReplyOut
 from BlogAPI.pydantic_models.user_models import UserOut, UserIn
 from BlogAPI.util.utils import authenticate_user, validate_new_user
 
@@ -95,128 +99,123 @@ def get_me(user=Depends(get_current_user)):
     return user
 
 
-# @router.get("/user/<user-id>/posts", response_model=List[PostOut])
-# def get_users_posts(
-#     user_id: int,
-#     skip: int = 0,
-#     limit: int = Query(10, ge=0, le=25),
-#     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
-# ):
-#     """
-#     # Returns a list of specified users posts
-#     Use skip and limit for pagination.\\
-#     Sortable by date created (by default returns newest).
-#     """
-#     session = db_session.create_session()
-#
-#     if sort_newest_first:
-#         posts = (
-#             session.query(Post)
-#             .order_by(desc(Post.date_created))
-#             .filter(Post.user_id == user_id)
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
-#
-#     else:
-#         posts = (
-#             session.query(Post)
-#             .order_by(asc(Post.date_created))
-#             .filter(Post.user_id == user_id)
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
-#
-#     return posts
-#
-#
-# @router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
-# def get_users_replies(
-#     user_id: int,
-#     skip: int = 0,
-#     limit: int = Query(10, ge=0, le=25),
-#     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
-# ):
-#     """
-#     # Returns a list of specified users replies
-#     Use skip and limit for pagination.\\
-#     Sortable by date created (by default returns newest).
-#     """
-#     session = db_session.create_session()
-#
-#     if sort_newest_first:
-#         replies = (
-#             session.query(Reply)
-#             .order_by(desc(Reply.date_created))
-#             .filter(Reply.user_id == user_id)
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
-#
-#     else:
-#         replies = (
-#             session.query(Reply)
-#             .order_by(asc(Reply.date_created))
-#             .filter(Reply.user_id == user_id)
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
-#
-#     return replies
-#
-#
-# @router.post(
-#     "/user/follow/<user-id>",
-#     responses={200: {"content": {"application/json": {"example": "success"}}}},
-# )
-# def follow_user(user_id, user=Depends(get_current_user)):
-#     """
-#     # Makes current user follow specified user
-#
-#     ---
-#
-#     ### Authorization Header
-#     Must include:
-#     ```
-#     {
-#         "Authorization": "Bearer {token}"
-#     }
-#     ```
-#     """
-#     session = db_session.create_session()
-#     user_to_follow: User = session.query(User).get(user_id)
-#
-#     if user in user_to_follow.followers:
-#         raise HTTPException(
-#             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-#             detail="User already followed",
-#         )
-#
-#     user_to_follow.followers += [user]
-#     session.commit()
-#
-#     return "success"
-#
-#
-# @router.get("/user/<user-id>/followers", response_model=List[UserOut])
-# def get_followers(user_id):
-#     """
-#     # Returns a list of all followers of current user
-#     """
-#     session = db_session.create_session()
-#     user = session.query(User).get(user_id)
-#     return user.followers
-#
-#
-# @router.get("/user/<user-id>/following", response_model=List[UserOut])
-# def get_following(user_id):
-#     """
-#     # Returns a list of all users that the current user is following
-#     """
-#     session = db_session.create_session()
-#     user = session.query(User).get(user_id)
-#     return user.following
+@router.get("/user/<user-id>/posts", response_model=List[PostOut])
+def get_users_posts(
+    user_id: int,
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    sort_newest_first: bool = Query(True, alias="sort-newest-first"),
+    db: Session = Depends(get_db),
+):
+    """
+    # Returns a list of specified users posts
+    Use skip and limit for pagination.\\
+    Sortable by date created (by default returns newest).
+    """
+    if sort_newest_first:
+        posts = (
+            db.query(Post)
+            .order_by(desc(Post.date_created))
+            .filter(Post.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    else:
+        posts = (
+            db.query(Post)
+            .order_by(asc(Post.date_created))
+            .filter(Post.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    return posts
+
+
+@router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
+def get_users_replies(
+    user_id: int,
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    sort_newest_first: bool = Query(True, alias="sort-newest-first"),
+    db: Session = Depends(get_db),
+):
+    """
+    # Returns a list of specified users replies
+    Use skip and limit for pagination.\\
+    Sortable by date created (by default returns newest).
+    """
+    if sort_newest_first:
+        replies = (
+            db.query(Reply)
+            .order_by(desc(Reply.date_created))
+            .filter(Reply.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    else:
+        replies = (
+            db.query(Reply)
+            .order_by(asc(Reply.date_created))
+            .filter(Reply.user_id == user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    return replies
+
+
+@router.post(
+    "/user/follow/<user-id>",
+    responses={200: {"content": {"application/json": {"example": "success"}}}},
+)
+def follow_user(user_id, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    # Makes current user follow specified user
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
+    user_to_follow: User = db.query(User).get(user_id)
+
+    if user in user_to_follow.followers:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already followed",
+        )
+
+    user_to_follow.followers += [user]
+    db.commit()
+
+    return {"detail": "success"}
+
+
+@router.get("/user/<user-id>/followers", response_model=List[UserOut])
+def get_followers(user_id, db: Session = Depends(get_db)):
+    """
+    # Returns a list of all followers of current user
+    """
+    user = db.query(User).get(user_id)
+    return user.followers
+
+
+@router.get("/user/<user-id>/following", response_model=List[UserOut])
+def get_following(user_id, db: Session = Depends(get_db)):
+    """
+    # Returns a list of all users that the current user is following
+    """
+    user = db.query(User).get(user_id)
+    return user.following
