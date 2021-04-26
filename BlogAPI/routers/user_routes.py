@@ -5,12 +5,13 @@ import jwt
 from fastapi import Depends, APIRouter, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, select
 from sqlalchemy.orm import Session
 from starlette import status
 
 from BlogAPI.config import config_settings
 from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
+from BlogAPI.db.db_session_async import create_async_session
 from BlogAPI.dependencies.dependencies import get_db, get_current_user
 from BlogAPI.pydantic_models.post_models import PostOut
 from BlogAPI.pydantic_models.reply_models import ReplyOut
@@ -59,12 +60,16 @@ def generate_token(
 
 
 @router.get("/user/<user-id>", response_model=UserOut)
-def get_user(user_id: int, db: Session = Depends(get_db)):
+async def get_user(user_id: int):
     """
     # Returns specified user
     Based off of user id provided
     """
-    return db.query(User).filter(User.id == user_id).first()
+    async with create_async_session() as session:
+        query = select(User).filter(User.id == user_id)
+        result = await session.execute(query)
+
+    return result.scalar_one_or_none()
 
 
 @router.post("/user", response_model=UserOut)
