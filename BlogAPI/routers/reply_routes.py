@@ -1,24 +1,28 @@
 import datetime
 
 from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy.orm import Session
 from starlette import status
 
-from BlogAPI.db import db_session
 from BlogAPI.db.SQLAlchemy_models import Reply
+from BlogAPI.dependencies.dependencies import get_current_user, get_db
 from BlogAPI.pydantic_models.reply_models import (
-    ReplyOut,
     UpdateReplyOut,
     UpdateReplyIn,
+    ReplyOut,
 )
-from BlogAPI.util.utils import get_current_user
 
 router = APIRouter()
 
 
 @router.put("/reply/<reply-id>", response_model=UpdateReplyOut)
 def update_reply(
-    reply_id, updated_reply: UpdateReplyIn, user=Depends(get_current_user)
+    reply_id,
+    updated_reply: UpdateReplyIn,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
+    # docstring in markdown for OpenAPI docs
     """
     # Update specified reply
     Updates reply and stores it in the database.
@@ -33,9 +37,10 @@ def update_reply(
     }
     ```
     """
-    session = db_session.create_session()
-    reply = session.query(Reply).get(reply_id)
 
+    reply = db.query(Reply).get(reply_id)
+
+    # make sure reply belongs to current user
     if reply.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,15 +50,21 @@ def update_reply(
     reply.body = updated_reply.body
     reply.date_modified = datetime.datetime.utcnow()
 
-    session.commit()
+    db.commit()
     return reply
 
 
 @router.delete(
     "/reply/<reply-id>",
-    responses={200: {"content": {"application/json": {"example": "success"}}}},
+    responses={
+        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+    },
 )
-def delete_reply(reply_id, user=Depends(get_current_user)):
+def delete_reply(
+    reply_id,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     # Delete specified reply
     Deletes reply from the database.
@@ -68,11 +79,12 @@ def delete_reply(reply_id, user=Depends(get_current_user)):
     }
     ```
     """
-    session = db_session.create_session()
 
+    # make sure reply exists - goes to except if it does not
     try:
-        reply = session.query(Reply).get(reply_id)
+        reply = db.query(Reply).get(reply_id)
 
+        # make sure reply belongs to current user
         if reply.user_id != user.id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -84,16 +96,16 @@ def delete_reply(reply_id, user=Depends(get_current_user)):
             status_code=status.HTTP_404_NOT_FOUND, detail="This reply does not exist"
         )
 
-    session.delete(reply)
-    session.commit()
-    return "success"
+    db.delete(reply)
+    db.commit()
+    return {"detail": "success"}
 
 
 @router.get("/reply/<reply-id>", response_model=ReplyOut)
-def get_reply(reply_id):
+def get_reply(reply_id, db: Session = Depends(get_db)):
     """
     # Return specified reply
     """
-    session = db_session.create_session()
-    reply = session.query(Reply).get(reply_id)
+
+    reply = db.query(Reply).get(reply_id)
     return reply
