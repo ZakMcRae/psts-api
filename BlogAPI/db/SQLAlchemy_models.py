@@ -4,7 +4,8 @@ from typing import Optional, List
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from passlib.hash import bcrypt
-from BlogAPI.db.db_session import Base
+
+Base = orm.declarative_base()
 
 
 class Reply(Base):

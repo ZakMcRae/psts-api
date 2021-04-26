@@ -1,7 +1,9 @@
 import fastapi
 import uvicorn
 from fastapi.openapi.utils import get_openapi
-from BlogAPI.db.db_session import Base, engine
+
+from BlogAPI.db.SQLAlchemy_models import Base
+from BlogAPI.db.db_session import engine
 from BlogAPI.routers import user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
