@@ -2,6 +2,9 @@ import json
 
 import jwt
 
+import pytest
+from httpx import AsyncClient
+
 from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.main import api
 from BlogAPI.tests.test_setup_and_utils import (
@@ -58,9 +61,11 @@ def test_generate_token():
     assert resp.json() == {"detail": "Invalid Username or Password"}
 
 
-def test_get_user():
+@pytest.mark.asyncio
+async def test_get_user():
     # successful test case
-    resp = client.get("/user/<user-id>?user_id=1")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/<user-id>?user_id=1")
 
     assert resp.status_code == 200
     assert resp.json() == {
