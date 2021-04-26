@@ -9,3 +9,6 @@ starlette
 requests
 email-validator
 pytest
+pytest-asyncio
+aiosqlite
+httpx
