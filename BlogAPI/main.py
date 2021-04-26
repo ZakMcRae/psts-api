@@ -2,7 +2,7 @@ import fastapi
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from BlogAPI.db.db_session import Base, engine
-from BlogAPI.routers import user_routes, post_routes
+from BlogAPI.routers import user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
 # todo - do a pass of endpoint status codes - ie delete should be 204 not 200
@@ -16,7 +16,7 @@ def configure_routing():
     # api.include_router(temp_routes.router, tags=["Temp"])
     api.include_router(user_routes.router, tags=["User"])
     api.include_router(post_routes.router, tags=["Post"])
-    # api.include_router(reply_routes.router, tags=["Reply"])
+    api.include_router(reply_routes.router, tags=["Reply"])
     pass
 
 
