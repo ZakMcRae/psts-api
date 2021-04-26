@@ -13,7 +13,6 @@ def configure():
 
 
 def configure_routing():
-    # api.include_router(temp_routes.router, tags=["Temp"])
     api.include_router(user_routes.router, tags=["User"])
     api.include_router(post_routes.router, tags=["Post"])
     api.include_router(reply_routes.router, tags=["Reply"])
