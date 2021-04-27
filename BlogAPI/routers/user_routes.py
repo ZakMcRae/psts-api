@@ -116,6 +116,8 @@ async def get_me(user=Depends(get_current_user)):
     return user
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
 @router.get("/user/<user-id>/posts", response_model=List[PostOut])
 async def get_users_posts(
     user_id: int,
@@ -146,6 +148,8 @@ async def get_users_posts(
     return list(posts.scalars())
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
 @router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
 async def get_users_replies(
     user_id: int,
@@ -175,6 +179,9 @@ async def get_users_replies(
         replies = await session.execute(query)
 
     return list(replies.scalars())
+
+
+# todo - figure out async SQLAlchemy relationships for follower routes
 
 
 @router.post(
