@@ -15,7 +15,8 @@ from BlogAPI.tests.test_setup_and_utils import (
 )
 
 
-def test_generate_token():
+@pytest.mark.asyncio
+async def test_generate_token():
     # successful test case - valid username and email
     body = {
         "username": "zaktest",
@@ -25,7 +26,10 @@ def test_generate_token():
         "accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    resp = client.post("/token", body, headers=header)
+
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/token", data=body, headers=header)
+
     token_info = resp.json()
 
     assert resp.status_code == 200
@@ -41,7 +45,8 @@ def test_generate_token():
         "accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    resp = client.post("/token", body, headers=header)
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/token", data=body, headers=header)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "Invalid Username or Password"}
@@ -55,7 +60,8 @@ def test_generate_token():
         "accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    resp = client.post("/token", body, headers=header)
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/token", data=body, headers=header)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "Invalid Username or Password"}
@@ -75,12 +81,14 @@ async def test_get_user():
     }
 
 
-def test_create_user(db_non_commit):
+@pytest.mark.asyncio
+async def test_create_user(db_non_commit):
     # db_non_commit - allows testing without database changes
 
     # successful test case
     body = {"username": "zoetest", "email": "zoetest@example.com", "password": 123}
-    resp = client.post("/user", json.dumps(body))
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/user", data=json.dumps(body))
     user_info = resp.json()
 
     assert resp.status_code == 200
@@ -89,23 +97,27 @@ def test_create_user(db_non_commit):
 
     # taken username case
     body = {"username": "zaktest", "email": "zoetest@example.com", "password": 123}
-    resp = client.post("/user", json.dumps(body))
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/user", data=json.dumps(body))
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "Username is taken, please try another"}
 
     # taken email case
     body = {"username": "zoetest", "email": "zaktest@example.com", "password": 123}
-    resp = client.post("/user", json.dumps(body))
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/user", data=json.dumps(body))
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "Email is taken, please try another"}
 
 
-def test_get_me(monkeypatch):
+@pytest.mark.asyncio
+async def test_get_me(monkeypatch):
     # fail case - invalid token
     header = {"Authorization": "Bearer a.fake.token"}
-    resp = client.get("/user/me", headers=header)
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/me", headers=header)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "Invalid token"}
@@ -118,7 +130,8 @@ def test_get_me(monkeypatch):
         test_info = json.load(fin)
 
     header = {"Authorization": f"Bearer {test_info.get('expired_test_token')}"}
-    resp = client.get("/user/me", headers=header)
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/me", headers=header)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "Token is expired"}
@@ -132,7 +145,8 @@ def test_get_me(monkeypatch):
     monkeypatch.setattr(jwt, "decode", mock_return_valid)
 
     header = {"Authorization": "Bearer a.fake.token"}
-    resp = client.get("/user/me", headers=header)
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/me", headers=header)
 
     assert resp.status_code == 200
     assert resp.json() == {

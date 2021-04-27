@@ -33,16 +33,13 @@ router = APIRouter()
         }
     },
 )
-def generate_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
+async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     # Generate token for user
     Authorizes a user for create/update/delete or for other authorization required endpoints.\\
     Can be passed to user via cookie or other method for login purposes when building a front end app.
     """
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,13 +70,14 @@ async def get_user(user_id: int):
 
 
 @router.post("/user", response_model=UserOut)
-def create_user(user_in: UserIn, db: Session = Depends(get_db)):
+async def create_user(user_in: UserIn):
     """
     # Create new user
     The password is hashed, no plain text passwords are stored.\\
     Stores user info in the database.
     """
-    if validate_new_user(db, user_in.username, user_in.email):
+    # make sure username and email unique
+    if await validate_new_user(user_in.username, user_in.email):
         hs_password = bcrypt.hash(user_in.password)
         user = User(
             username=user_in.username,
@@ -87,17 +85,20 @@ def create_user(user_in: UserIn, db: Session = Depends(get_db)):
             hs_password=hs_password,
         )
 
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
-
     else:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # store user in database
+    async with create_async_session() as session:
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+    return user
+
 
 @router.get("/user/me", response_model=UserOut)
-def get_me(user=Depends(get_current_user)):
+async def get_me(user=Depends(get_current_user)):
     """
     # Returns current user info
     Queries database for current user information base on token provided.
