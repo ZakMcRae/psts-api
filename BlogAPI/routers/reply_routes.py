@@ -1,11 +1,12 @@
 import datetime
 
 from fastapi import Depends, APIRouter, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import select
 from starlette import status
 
 from BlogAPI.db.SQLAlchemy_models import Reply
-from BlogAPI.dependencies.dependencies import get_current_user, get_db
+from BlogAPI.db.db_session_async import create_async_session
+from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.pydantic_models.reply_models import (
     UpdateReplyOut,
     UpdateReplyIn,
@@ -16,11 +17,10 @@ router = APIRouter()
 
 
 @router.put("/reply/<reply-id>", response_model=UpdateReplyOut)
-def update_reply(
+async def update_reply(
     reply_id,
     updated_reply: UpdateReplyIn,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     # docstring in markdown for OpenAPI docs
     """
@@ -37,8 +37,11 @@ def update_reply(
     }
     ```
     """
+    async with create_async_session() as session:
+        query = select(Reply).filter(Reply.id == reply_id)
+        result = await session.execute(query)
 
-    reply = db.query(Reply).get(reply_id)
+    reply = result.scalar_one_or_none()
 
     # make sure reply belongs to current user
     if reply.user_id != user.id:
@@ -50,7 +53,9 @@ def update_reply(
     reply.body = updated_reply.body
     reply.date_modified = datetime.datetime.utcnow()
 
-    db.commit()
+    async with create_async_session() as session:
+        await session.commit()
+
     return reply
 
 
@@ -60,10 +65,9 @@ def update_reply(
         200: {"content": {"application/json": {"example": {"detail": "success"}}}}
     },
 )
-def delete_reply(
+async def delete_reply(
     reply_id,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     """
     # Delete specified reply
@@ -82,7 +86,11 @@ def delete_reply(
 
     # make sure reply exists - goes to except if it does not
     try:
-        reply = db.query(Reply).get(reply_id)
+        async with create_async_session() as session:
+            query = select(Reply).filter(Reply.id == reply_id)
+            result = await session.execute(query)
+
+        reply = result.scalar_one_or_none()
 
         # make sure reply belongs to current user
         if reply.user_id != user.id:
@@ -96,16 +104,22 @@ def delete_reply(
             status_code=status.HTTP_404_NOT_FOUND, detail="This reply does not exist"
         )
 
-    db.delete(reply)
-    db.commit()
+    async with create_async_session() as session:
+        await session.delete(reply)
+        await session.commit()
+
     return {"detail": "success"}
 
 
 @router.get("/reply/<reply-id>", response_model=ReplyOut)
-def get_reply(reply_id, db: Session = Depends(get_db)):
+async def get_reply(reply_id):
     """
     # Return specified reply
     """
+    async with create_async_session() as session:
+        query = select(Reply).filter(Reply.id == reply_id)
+        result = await session.execute(query)
 
-    reply = db.query(Reply).get(reply_id)
+    reply = result.scalar_one_or_none()
+
     return reply
