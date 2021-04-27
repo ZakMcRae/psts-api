@@ -3,12 +3,12 @@ from typing import List
 
 from fastapi import Depends, APIRouter
 from fastapi import HTTPException, Query
-from sqlalchemy import desc, asc
-from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc, select
 from starlette import status
 
 from BlogAPI.db.SQLAlchemy_models import Post, Reply
-from BlogAPI.dependencies.dependencies import get_current_user, get_db
+from BlogAPI.db.db_session_async import create_async_session
+from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.pydantic_models.post_models import (
     NewPostIn,
     PostOut,
@@ -21,10 +21,9 @@ router = APIRouter()
 
 
 @router.post("/post", response_model=PostOut)
-def create_post(
+async def create_post(
     new_post: NewPostIn,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     """
     # Create a new post
@@ -47,18 +46,20 @@ def create_post(
         user_id=user.id,
         username=user.username,
     )
-    db.add(post)
-    db.commit()
-    db.refresh(post)
+
+    async with create_async_session() as session:
+        session.add(post)
+        await session.commit()
+        await session.refresh(post)
+
     return post
 
 
 @router.put("/post/<post-id>", response_model=UpdatePostOut)
-def update_post(
+async def update_post(
     post_id,
     updated_post: UpdatePostIn,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     """
     # Update specified post
@@ -74,8 +75,11 @@ def update_post(
     }
     ```
     """
+    async with create_async_session() as session:
+        query = select(Post).filter(Post.id == post_id)
+        result = await session.execute(query)
 
-    post = db.query(Post).get(post_id)
+    post = result.scalar_one_or_none()
 
     if post.user_id != user.id:
         raise HTTPException(
@@ -90,7 +94,9 @@ def update_post(
 
     post.date_modified = datetime.datetime.utcnow()
 
-    db.commit()
+    async with create_async_session() as session:
+        await session.commit()
+
     return post
 
 
@@ -100,10 +106,9 @@ def update_post(
         200: {"content": {"application/json": {"example": {"detail": "success"}}}}
     },
 )
-def delete_post(
+async def delete_post(
     post_id,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     """
     # Delete specified post
@@ -121,7 +126,11 @@ def delete_post(
     """
 
     try:
-        post = db.query(Post).get(post_id)
+        async with create_async_session() as session:
+            query = select(Post).filter(Post.id == post_id)
+            result = await session.execute(query)
+
+        post = result.scalar_one_or_none()
 
         if post.user_id != user.id:
             raise HTTPException(
@@ -134,27 +143,31 @@ def delete_post(
             status_code=status.HTTP_404_NOT_FOUND, detail="This post does not exist"
         )
 
-    db.delete(post)
-    db.commit()
+    async with create_async_session() as session:
+        await session.delete(post)
+        await session.commit()
+
     return {"detail": "success"}
 
 
 @router.get("/post/<post-id>", response_model=PostOut)
-def get_post(post_id, db: Session = Depends(get_db)):
+async def get_post(post_id):
     """
     # Return specified post
     """
+    async with create_async_session() as session:
+        query = select(Post).filter(Post.id == post_id)
+        result = await session.execute(query)
 
-    post = db.query(Post).get(post_id)
+    post = result.scalar_one_or_none()
     return post
 
 
 @router.post("/post/post-id/reply", response_model=ReplyOut)
-def create_reply(
+async def create_reply(
     post_id: int,
     new_reply: NewReplyIn,
     user=Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     """
     # Create new reply
@@ -177,61 +190,58 @@ def create_reply(
         username=user.username,
         post_id=post_id,
     )
-    db.add(reply)
-    db.commit()
+
+    async with create_async_session() as session:
+        session.add(reply)
+        await session.commit()
     return reply
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
 @router.get("/post/<post-id>/replies", response_model=List[ReplyOut])
-def get_replies(
+async def get_replies(
     post_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
-    db: Session = Depends(get_db),
 ):
     """
     # Returns all replies to specified post
     Use skip and limit for pagination.\\
     Sortable by date created (by default returns newest).
     """
-
     if sort_newest_first:
-        replies = (
-            db.query(Reply)
-            .order_by(desc(Reply.date_created))
-            .filter(Reply.post_id == post_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
+        sort_by = desc
     else:
-        replies = (
-            db.query(Reply)
-            .order_by(asc(Reply.date_created))
+        sort_by = asc
+
+    async with create_async_session() as session:
+        query = (
+            select(Reply)
             .filter(Reply.post_id == post_id)
+            .order_by(sort_by(Reply.date_created))
             .offset(skip)
             .limit(limit)
-            .all()
         )
 
-    return replies
+        replies = await session.execute(query)
+
+    return list(replies.scalars())
 
 
 @router.get("/posts/recent", response_model=List[PostOut])
-def get_recent_posts(
+async def get_recent_posts(
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
-    db: Session = Depends(get_db),
 ):
     """
     # Returns list of recent posts from all users
     Useful for a home/front page blog site before login
     """
+    async with create_async_session() as session:
+        query = select(Post).order_by(desc(Post.date_created)).offset(skip).limit(limit)
 
-    posts = (
-        db.query(Post).order_by(desc(Post.date_created)).offset(skip).limit(limit).all()
-    )
+        posts = await session.execute(query)
 
-    return posts
+    return list(posts.scalars())
