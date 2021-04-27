@@ -117,12 +117,11 @@ async def get_me(user=Depends(get_current_user)):
 
 
 @router.get("/user/<user-id>/posts", response_model=List[PostOut])
-def get_users_posts(
+async def get_users_posts(
     user_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
-    db: Session = Depends(get_db),
 ):
     """
     # Returns a list of specified users posts
@@ -130,35 +129,29 @@ def get_users_posts(
     Sortable by date created (by default returns newest).
     """
     if sort_newest_first:
-        posts = (
-            db.query(Post)
-            .order_by(desc(Post.date_created))
-            .filter(Post.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
+        sort_by = desc
     else:
-        posts = (
-            db.query(Post)
-            .order_by(asc(Post.date_created))
+        sort_by = asc
+
+    async with create_async_session() as session:
+        query = (
+            select(Post)
             .filter(Post.user_id == user_id)
+            .order_by(sort_by(Post.date_created))
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        posts = await session.execute(query)
 
-    return posts
+    return list(posts.scalars())
 
 
 @router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
-def get_users_replies(
+async def get_users_replies(
     user_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
     sort_newest_first: bool = Query(True, alias="sort-newest-first"),
-    db: Session = Depends(get_db),
 ):
     """
     # Returns a list of specified users replies
@@ -166,26 +159,22 @@ def get_users_replies(
     Sortable by date created (by default returns newest).
     """
     if sort_newest_first:
-        replies = (
-            db.query(Reply)
-            .order_by(desc(Reply.date_created))
-            .filter(Reply.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
+        sort_by = desc
     else:
-        replies = (
-            db.query(Reply)
-            .order_by(asc(Reply.date_created))
+        sort_by = asc
+
+    async with create_async_session() as session:
+        query = (
+            select(Reply)
             .filter(Reply.user_id == user_id)
+            .order_by(sort_by(Reply.date_created))
             .offset(skip)
             .limit(limit)
-            .all()
         )
 
-    return replies
+        replies = await session.execute(query)
+
+    return list(replies.scalars())
 
 
 @router.post(

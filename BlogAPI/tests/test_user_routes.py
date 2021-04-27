@@ -156,11 +156,13 @@ async def test_get_me(monkeypatch):
     }
 
 
-def test_get_users_posts():
+@pytest.mark.asyncio
+async def test_get_users_posts():
     # successful case - id:1, skip:1, limit:3, sort:new first
-    resp = client.get(
-        "/user/<user-id>/posts?user_id=1&skip=1&limit=3&sort-newest-first=true"
-    )
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get(
+            "/user/<user-id>/posts?user_id=1&skip=1&limit=3&sort-newest-first=true"
+        )
     posts = resp.json()
 
     assert resp.status_code == 200
@@ -168,9 +170,10 @@ def test_get_users_posts():
     assert posts[2].get("title") == "zaktest's post #2"
 
     # successful case - id:3, skip:0, limit:5, sort:old first
-    resp = client.get(
-        "/user/<user-id>/posts?user_id=3&skip=0&limit=5&sort-newest-first=false"
-    )
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get(
+            "/user/<user-id>/posts?user_id=3&skip=0&limit=5&sort-newest-first=false"
+        )
     posts = resp.json()
 
     assert resp.status_code == 200
@@ -178,11 +181,13 @@ def test_get_users_posts():
     assert posts[4].get("title") == "theotest's post #5"
 
 
-def test_get_users_replies():
+@pytest.mark.asyncio
+async def test_get_users_replies():
     # successful case - id:1, skip:1, limit:3, sort:new first
-    resp = client.get(
-        "/user/<user-id>/replies?user_id=1&skip=1&limit=3&sort-newest-first=true"
-    )
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get(
+            "/user/<user-id>/replies?user_id=1&skip=1&limit=3&sort-newest-first=true"
+        )
     replies = resp.json()
 
     assert resp.status_code == 200
@@ -190,9 +195,10 @@ def test_get_users_replies():
     assert replies[2].get("body") == "This is a reply of mock data. Reply #17"
 
     # successful case - id:3, skip:0, limit:5, sort:old first
-    resp = client.get(
-        "/user/<user-id>/replies?user_id=3&skip=0&limit=5&sort-newest-first=false"
-    )
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get(
+            "/user/<user-id>/replies?user_id=3&skip=0&limit=5&sort-newest-first=false"
+        )
     replies = resp.json()
 
     assert resp.status_code == 200
