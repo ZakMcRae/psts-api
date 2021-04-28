@@ -6,13 +6,13 @@ from fastapi import Depends, APIRouter, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.hash import bcrypt
 from sqlalchemy import desc, asc, select
-from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from starlette import status
 
 from BlogAPI.config import config_settings
-from BlogAPI.db.SQLAlchemy_models import User, Post, Reply
+from BlogAPI.db.SQLAlchemy_models import User, Post, Reply, user_follow
 from BlogAPI.db.db_session_async import create_async_session
-from BlogAPI.dependencies.dependencies import get_db, get_current_user
+from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.pydantic_models.post_models import PostOut
 from BlogAPI.pydantic_models.reply_models import ReplyOut
 from BlogAPI.pydantic_models.user_models import UserOut, UserIn
@@ -190,7 +190,7 @@ async def get_users_replies(
         200: {"content": {"application/json": {"example": {"detail": "success"}}}}
     },
 )
-def follow_user(user_id, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def follow_user(user_id: int, user=Depends(get_current_user)):
     """
     # Makes current user follow specified user
 
@@ -204,33 +204,103 @@ def follow_user(user_id, user=Depends(get_current_user), db: Session = Depends(g
     }
     ```
     """
-    user_to_follow: User = db.query(User).get(user_id)
+    # try to follow user
+    try:
+        async with create_async_session() as session:
+            stmt = user_follow.insert().values(user_id=user_id, following_id=user.id)
+            await session.execute(stmt)
+            await session.commit()
 
-    if user in user_to_follow.followers:
+        return {"detail": "success"}
+
+    # fails on Unique constraint if user already followed
+    except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="User already followed",
         )
 
-    user_to_follow.followers += [user]
-    db.commit()
+
+@router.delete(
+    "/user/follow/<user-id>",
+    responses={
+        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+    },
+)
+async def unfollow_user(user_id: int, user=Depends(get_current_user)):
+    """
+    # Makes current user unfollow specified user
+
+    ---
+
+    ### Authorization Header
+    Must include:
+    ```
+    {
+        "Authorization": "Bearer {token}"
+    }
+    ```
+    """
+    # unfollow user - deletes row in user_follow table
+    async with create_async_session() as session:
+        stmt = user_follow.delete().where(
+            user_follow.c.user_id == user_id, user_follow.c.following_id == user.id
+        )
+        await session.execute(stmt)
+        await session.commit()
 
     return {"detail": "success"}
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
 @router.get("/user/<user-id>/followers", response_model=List[UserOut])
-def get_followers(user_id, db: Session = Depends(get_db)):
+async def get_followers(user_id):
     """
     # Returns a list of all followers of current user
     """
-    user = db.query(User).get(user_id)
-    return user.followers
+    # get list of follower ids from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.following_id).filter(
+            user_follow.c.user_id == user_id
+        )
+        result = await session.execute(query)
+
+    follower_ids = list(result.scalars())
+
+    # generate list of user objects from list of ids
+    async with create_async_session() as session:
+        followers = []
+        for follower_id in follower_ids:
+            query = select(User).filter(User.id == follower_id)
+            result = await session.execute(query)
+            followers.append(result.scalar())
+
+    return followers
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
 @router.get("/user/<user-id>/following", response_model=List[UserOut])
-def get_following(user_id, db: Session = Depends(get_db)):
+async def get_following(user_id):
     """
     # Returns a list of all users that the current user is following
     """
-    user = db.query(User).get(user_id)
-    return user.following
+    # get list of user_ids following from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.user_id).filter(
+            user_follow.c.following_id == user_id
+        )
+        result = await session.execute(query)
+
+    following_ids = list(result.scalars())
+
+    # generate list of user objects from list of ids
+    async with create_async_session() as session:
+        following = []
+        for following_id in following_ids:
+            query = select(User).filter(User.id == following_id)
+            result = await session.execute(query)
+            following.append(result.scalar())
+
+    return following

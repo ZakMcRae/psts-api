@@ -4,11 +4,16 @@ import jwt
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 
+from BlogAPI.db.SQLAlchemy_models import user_follow
+from BlogAPI.db.db_session_async import create_async_session
 from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.main import api
+
+# noinspection PyUnresolvedReferences
+# db_non_commit pytest fixture used below - shows unused in editor
 from BlogAPI.tests.test_setup_and_utils import (
-    client,
     db_non_commit,
     override_get_current_user_zak,
     override_get_current_user_elliot,
@@ -206,11 +211,13 @@ async def test_get_users_replies():
     assert replies[4].get("body") == "This is a reply of mock data. Reply #5"
 
 
-def test_follow_user(db_non_commit):
+@pytest.mark.asyncio
+async def test_follow_user(db_non_commit):
     # fail case - user already followed
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
-    resp = client.post("/user/follow/<user-id>?user_id=2")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/user/follow/<user-id>?user_id=2")
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "User already followed"}
@@ -218,7 +225,8 @@ def test_follow_user(db_non_commit):
     # successful case
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_elliot
-    resp = client.post("/user/follow/<user-id>?user_id=3")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/user/follow/<user-id>?user_id=3")
 
     assert resp.status_code == 200
     assert resp.json() == {"detail": "success"}
@@ -227,9 +235,49 @@ def test_follow_user(db_non_commit):
     del api.dependency_overrides[get_current_user]
 
 
-def test_get_followers():
+@pytest.mark.asyncio
+async def test_unfollow_user():
+    # successful case
+    # mock authorization - return user directly
+    api.dependency_overrides[get_current_user] = override_get_current_user_zak
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.delete("/user/follow/<user-id>?user_id=2")
+
+    assert resp.status_code == 200
+    assert resp.json() == {"detail": "success"}
+
+    # verify row deleted
+    # get list of follower ids from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.user_id).filter(user_follow.c.following_id == 1)
+        result = await session.execute(query)
+
+    following_ids = list(result.scalars())
+
+    assert 2 not in following_ids
+
+    # reinsert row to maintain database state
+    async with create_async_session() as session:
+        stmt = user_follow.insert().values(user_id=2, following_id=1)
+        await session.execute(stmt)
+        await session.commit()
+
+    # verify reinsert successful
+    async with create_async_session() as session:
+        query = select(user_follow.c.user_id).filter(user_follow.c.following_id == 1)
+        result = await session.execute(query)
+
+    following_ids = list(result.scalars())
+
+    assert 2 in following_ids
+
+
+@pytest.mark.asyncio
+async def test_get_followers():
     # successful case - user with followers
-    resp = client.get("/user/<user-id>/followers?user_id=1")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/<user-id>/followers?user_id=1")
+
     followers = resp.json()
 
     assert resp.status_code == 200
@@ -237,16 +285,21 @@ def test_get_followers():
     assert followers[1].get("username") == "theotest"
 
     # successful case - user with no followers
-    resp = client.get("/user/<user-id>/followers?user_id=4")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/<user-id>/followers?user_id=4")
+
     followers = resp.json()
 
     assert resp.status_code == 200
     assert len(followers) == 0
 
 
-def test_get_following():
+@pytest.mark.asyncio
+async def test_get_following():
     # successful case - user a following
-    resp = client.get("/user/<user-id>/followers?user_id=2")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/<user-id>/followers?user_id=2")
+
     following = resp.json()
 
     assert resp.status_code == 200
@@ -254,7 +307,9 @@ def test_get_following():
     assert following[1].get("username") == "theotest"
 
     # successful case - user with no followers
-    resp = client.get("/user/<user-id>/followers?user_id=4")
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/<user-id>/followers?user_id=4")
+
     following = resp.json()
 
     assert resp.status_code == 200
