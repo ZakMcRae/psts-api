@@ -20,7 +20,7 @@ from BlogAPI.pydantic_models.reply_models import NewReplyIn, ReplyOut
 router = APIRouter()
 
 
-@router.post("/post", response_model=PostOut)
+@router.post("/post", response_model=PostOut, status_code=201)
 async def create_post(
     new_post: NewPostIn,
     user=Depends(get_current_user),
@@ -55,7 +55,19 @@ async def create_post(
     return post
 
 
-@router.put("/post/<post-id>", response_model=UpdatePostOut)
+@router.put(
+    "/post/<post-id>",
+    response_model=UpdatePostOut,
+    responses={
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "This post belongs to another user"}
+                }
+            }
+        }
+    },
+)
 async def update_post(
     post_id,
     updated_post: UpdatePostIn,
@@ -103,8 +115,25 @@ async def update_post(
 @router.delete(
     "/post/<post-id>",
     responses={
-        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+        204: {
+            "content": {
+                "application/json": {"example": {"detail": "Success - Post deleted"}}
+            }
+        },
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "This post belongs to another user"}
+                }
+            }
+        },
+        404: {
+            "content": {
+                "application/json": {"example": {"detail": "This post does not exist"}}
+            }
+        },
     },
+    status_code=204,
 )
 async def delete_post(
     post_id,
@@ -163,7 +192,7 @@ async def get_post(post_id):
     return post
 
 
-@router.post("/post/post-id/reply", response_model=ReplyOut)
+@router.post("/post/post-id/reply", response_model=ReplyOut, status_code=201)
 async def create_reply(
     post_id: int,
     new_reply: NewReplyIn,

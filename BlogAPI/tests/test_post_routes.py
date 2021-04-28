@@ -29,7 +29,7 @@ async def test_create_post():
 
     post = resp.json()
 
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     assert post.get("title") == "My First Post"
     assert post.get("id") == 21
 
@@ -92,7 +92,7 @@ async def test_delete_post(db_non_commit):
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.delete("/post/<post-id>?post_id=1")
 
-    assert resp.status_code == 200
+    assert resp.status_code == 204
     assert resp.json() == {"detail": "success"}
 
     # fail case - post belongs to another user
@@ -137,7 +137,7 @@ async def test_create_reply():
 
     reply = resp.json()
 
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     assert reply.get("body") == "My First Reply"
     assert reply.get("id") == 81
 

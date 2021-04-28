@@ -49,7 +49,7 @@ async def test_delete_reply(db_non_commit):
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.delete("/reply/<reply-id>?reply_id=1")
 
-    assert resp.status_code == 200
+    assert resp.status_code == 204
     assert resp.json() == {"detail": "success"}
 
     # fail case - reply belongs to another user

@@ -16,7 +16,19 @@ from BlogAPI.pydantic_models.reply_models import (
 router = APIRouter()
 
 
-@router.put("/reply/<reply-id>", response_model=UpdateReplyOut)
+@router.put(
+    "/reply/<reply-id>",
+    response_model=UpdateReplyOut,
+    responses={
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "This reply belongs to another user"}
+                }
+            }
+        },
+    },
+)
 async def update_reply(
     reply_id,
     updated_reply: UpdateReplyIn,
@@ -62,8 +74,25 @@ async def update_reply(
 @router.delete(
     "/reply/<reply-id>",
     responses={
-        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+        204: {
+            "content": {
+                "application/json": {"example": {"detail": "Success - Reply deleted"}}
+            }
+        },
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "This reply belongs to another user"}
+                }
+            }
+        },
+        409: {
+            "content": {
+                "application/json": {"example": {"detail": "This reply does not exist"}}
+            }
+        },
     },
+    status_code=204,
 )
 async def delete_reply(
     reply_id,

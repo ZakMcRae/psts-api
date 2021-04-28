@@ -1,7 +1,6 @@
 import json
 
 import jwt
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -96,7 +95,7 @@ async def test_create_user(db_non_commit):
         resp = await ac.post("/user", data=json.dumps(body))
     user_info = resp.json()
 
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     assert user_info.get("username") == "zoetest"
     assert user_info.get("email") == "zoetest@example.com"
 
@@ -228,8 +227,8 @@ async def test_follow_user(db_non_commit):
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.post("/user/follow/<user-id>?user_id=3")
 
-    assert resp.status_code == 200
-    assert resp.json() == {"detail": "success"}
+    assert resp.status_code == 201
+    assert resp.json() == {"detail": "Success - User followed"}
 
     # delete dependency overwrite - don't want to conflict with other tests
     del api.dependency_overrides[get_current_user]
@@ -243,8 +242,8 @@ async def test_unfollow_user():
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.delete("/user/follow/<user-id>?user_id=2")
 
-    assert resp.status_code == 200
-    assert resp.json() == {"detail": "success"}
+    assert resp.status_code == 204
+    assert resp.json() == {"detail": "Success - User unfollowed"}
 
     # verify row deleted
     # get list of follower ids from database

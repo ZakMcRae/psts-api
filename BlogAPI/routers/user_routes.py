@@ -30,7 +30,14 @@ router = APIRouter()
                     "example": {"access_token": "token", "token_type": "bearer"}
                 }
             }
-        }
+        },
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Invalid Username or Password"}
+                }
+            }
+        },
     },
 )
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -69,7 +76,22 @@ async def get_user(user_id: int):
     return result.scalar_one_or_none()
 
 
-@router.post("/user", response_model=UserOut)
+@router.post(
+    "/user",
+    response_model=UserOut,
+    status_code=201,
+    responses={
+        409: {
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Username||Email is taken, please try another"
+                    }
+                }
+            }
+        },
+    },
+)
 async def create_user(user_in: UserIn):
     """
     # Create new user
@@ -85,6 +107,7 @@ async def create_user(user_in: UserIn):
             hs_password=hs_password,
         )
 
+    # there are checks to throw status 409 within above validate_new_user
     else:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -181,14 +204,21 @@ async def get_users_replies(
     return list(replies.scalars())
 
 
-# todo - figure out async SQLAlchemy relationships for follower routes
-
-
 @router.post(
     "/user/follow/<user-id>",
     responses={
-        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+        201: {
+            "content": {
+                "application/json": {"example": {"detail": "Success - User followed"}}
+            }
+        },
+        409: {
+            "content": {
+                "application/json": {"example": {"detail": "User already followed"}}
+            }
+        },
     },
+    status_code=201,
 )
 async def follow_user(user_id: int, user=Depends(get_current_user)):
     """
@@ -211,7 +241,7 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
             await session.execute(stmt)
             await session.commit()
 
-        return {"detail": "success"}
+        return {"detail": "Success - User followed"}
 
     # fails on Unique constraint if user already followed
     except IntegrityError:
@@ -221,11 +251,17 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
         )
 
 
+# todo - should throw a 404 after already deleted
 @router.delete(
     "/user/follow/<user-id>",
     responses={
-        200: {"content": {"application/json": {"example": {"detail": "success"}}}}
+        204: {
+            "content": {
+                "application/json": {"example": {"detail": "Success - User unfollowed"}}
+            }
+        }
     },
+    status_code=204,
 )
 async def unfollow_user(user_id: int, user=Depends(get_current_user)):
     """
@@ -249,7 +285,7 @@ async def unfollow_user(user_id: int, user=Depends(get_current_user)):
         await session.execute(stmt)
         await session.commit()
 
-    return {"detail": "success"}
+    return {"detail": "Success - User unfollowed"}
 
 
 # noinspection DuplicatedCode
