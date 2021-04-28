@@ -1,6 +1,5 @@
 from fastapi import HTTPException
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 from starlette import status
 
 from BlogAPI.db.SQLAlchemy_models import User
