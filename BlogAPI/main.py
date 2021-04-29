@@ -7,9 +7,6 @@ from BlogAPI.db.db_session import engine
 from BlogAPI.routers import user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
-# todo - path parameters not working in urls ie /post/1 returns errors
-# change <> to {}
-# maybe use Path with aliases
 
 
 def configure():
@@ -29,7 +26,8 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title="BlogAPI",
         version="0.1",
-        description="## A Practice API - Backend endpoints for a blog\n Made by: [ZakMcRae - GitHub](https://github.com/ZakMcRae)",
+        description="## A Practice API - Async Backend endpoints for a blog\n  "
+        "Made by: [ZakMcRae - GitHub](https://github.com/ZakMcRae)",
         routes=api.routes,
     )
     api.openapi_schema = openapi_schema
