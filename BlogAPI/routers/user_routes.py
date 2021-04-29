@@ -22,61 +22,6 @@ router = APIRouter()
 
 
 @router.post(
-    "/token",
-    responses={
-        200: {
-            "content": {
-                "application/json": {
-                    "example": {"access_token": "token", "token_type": "bearer"}
-                }
-            }
-        },
-        401: {
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Invalid Username or Password"}
-                }
-            }
-        },
-    },
-)
-async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """
-    # Generate token for user
-    Authorizes a user for create/update/delete or for other authorization required endpoints.\\
-    Can be passed to user via cookie or other method for login purposes when building a front end app.
-    """
-    user = await authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Username or Password",
-        )
-
-    user_info = {
-        "id": user.id,
-        "username": user.username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=30),
-    }
-
-    token = jwt.encode(user_info, config_settings.secret_key)
-    return {"access_token": token, "token_type": "bearer"}
-
-
-@router.get("/user/<user-id>", response_model=UserOut)
-async def get_user(user_id: int):
-    """
-    # Returns specified user
-    Based off of user id provided
-    """
-    async with create_async_session() as session:
-        query = select(User).filter(User.id == user_id)
-        result = await session.execute(query)
-
-    return result.scalar_one_or_none()
-
-
-@router.post(
     "/user",
     response_model=UserOut,
     status_code=201,
@@ -120,6 +65,61 @@ async def create_user(user_in: UserIn):
     return user
 
 
+@router.post(
+    "/token",
+    responses={
+        200: {
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access_token": "{token}",
+                        "token_type": "bearer",
+                        "expires_at": "1622315128.247613",
+                    }
+                }
+            }
+        },
+        401: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Invalid Username or Password"}
+                }
+            }
+        },
+    },
+)
+async def generate_auth_token_for_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
+    """
+    # Generate token for user
+    Authorizes a user for create/update/delete or for other authorization required endpoints.\\
+    Can be passed to user via cookie or other method for login purposes when building a front end app.\\
+    Token is valid for 30 days.
+    """
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Username or Password",
+        )
+
+    expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
+
+    user_info = {
+        "id": user.id,
+        "username": user.username,
+        "exp": expiry,
+    }
+
+    token = jwt.encode(user_info, config_settings.secret_key)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "expires_at": expiry.timestamp(),
+    }
+
+
 @router.get("/user/me", response_model=UserOut)
 async def get_me(user=Depends(get_current_user)):
     """
@@ -139,9 +139,22 @@ async def get_me(user=Depends(get_current_user)):
     return user
 
 
+@router.get("/user/{user_id}", response_model=UserOut)
+async def get_user(user_id: int):
+    """
+    # Returns specified user
+    Based off of user id provided
+    """
+    async with create_async_session() as session:
+        query = select(User).filter(User.id == user_id)
+        result = await session.execute(query)
+
+    return result.scalar_one_or_none()
+
+
 # noinspection DuplicatedCode
 # keeping docstrings/queries as is instead of refactoring into 1 function - more readable
-@router.get("/user/<user-id>/posts", response_model=List[PostOut])
+@router.get("/user/{user_id}/posts", response_model=List[PostOut])
 async def get_users_posts(
     user_id: int,
     skip: int = 0,
@@ -173,7 +186,7 @@ async def get_users_posts(
 
 # noinspection DuplicatedCode
 # keeping docstrings/queries as is instead of refactoring into 1 function - more readable
-@router.get("/user/<user-id>/replies", response_model=List[ReplyOut])
+@router.get("/user/{user_id}/replies", response_model=List[ReplyOut])
 async def get_users_replies(
     user_id: int,
     skip: int = 0,
@@ -204,8 +217,62 @@ async def get_users_replies(
     return list(replies.scalars())
 
 
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
+@router.get("/user/{user_id}/followers", response_model=List[UserOut])
+async def get_users_followers(user_id):
+    """
+    # Returns a list of all followers of current user
+    """
+    # get list of follower ids from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.following_id).filter(
+            user_follow.c.user_id == user_id
+        )
+        result = await session.execute(query)
+
+    follower_ids = list(result.scalars())
+
+    # generate list of user objects from list of ids
+    async with create_async_session() as session:
+        followers = []
+        for follower_id in follower_ids:
+            query = select(User).filter(User.id == follower_id)
+            result = await session.execute(query)
+            followers.append(result.scalar())
+
+    return followers
+
+
+# noinspection DuplicatedCode
+# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
+@router.get("/user/{user_id}/following", response_model=List[UserOut])
+async def get_users_following(user_id):
+    """
+    # Returns a list of all users that the current user is following
+    """
+    # get list of user_ids following from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.user_id).filter(
+            user_follow.c.following_id == user_id
+        )
+        result = await session.execute(query)
+
+    following_ids = list(result.scalars())
+
+    # generate list of user objects from list of ids
+    async with create_async_session() as session:
+        following = []
+        for following_id in following_ids:
+            query = select(User).filter(User.id == following_id)
+            result = await session.execute(query)
+            following.append(result.scalar())
+
+    return following
+
+
 @router.post(
-    "/user/follow/<user-id>",
+    "/user/follow/{user_id}",
     responses={
         201: {
             "content": {
@@ -252,7 +319,7 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
 
 
 @router.delete(
-    "/user/follow/<user-id>",
+    "/user/follow/{user_id}",
     responses={
         204: {
             "content": {
@@ -306,57 +373,3 @@ async def unfollow_user(user_id: int, user=Depends(get_current_user)):
         await session.commit()
 
     return {"detail": "Success - User unfollowed"}
-
-
-# noinspection DuplicatedCode
-# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
-@router.get("/user/<user-id>/followers", response_model=List[UserOut])
-async def get_followers(user_id):
-    """
-    # Returns a list of all followers of current user
-    """
-    # get list of follower ids from database
-    async with create_async_session() as session:
-        query = select(user_follow.c.following_id).filter(
-            user_follow.c.user_id == user_id
-        )
-        result = await session.execute(query)
-
-    follower_ids = list(result.scalars())
-
-    # generate list of user objects from list of ids
-    async with create_async_session() as session:
-        followers = []
-        for follower_id in follower_ids:
-            query = select(User).filter(User.id == follower_id)
-            result = await session.execute(query)
-            followers.append(result.scalar())
-
-    return followers
-
-
-# noinspection DuplicatedCode
-# keeping docstrings/queries as is instead of refactoring into 1 function - more readable
-@router.get("/user/<user-id>/following", response_model=List[UserOut])
-async def get_following(user_id):
-    """
-    # Returns a list of all users that the current user is following
-    """
-    # get list of user_ids following from database
-    async with create_async_session() as session:
-        query = select(user_follow.c.user_id).filter(
-            user_follow.c.following_id == user_id
-        )
-        result = await session.execute(query)
-
-    following_ids = list(result.scalars())
-
-    # generate list of user objects from list of ids
-    async with create_async_session() as session:
-        following = []
-        for following_id in following_ids:
-            query = select(User).filter(User.id == following_id)
-            result = await session.execute(query)
-            following.append(result.scalar())
-
-    return following
