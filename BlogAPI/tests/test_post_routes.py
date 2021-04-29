@@ -62,7 +62,7 @@ async def test_update_post(db_non_commit):
     body = {"title": "My First Updated Post", "body": "Welcome to my blog."}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/post/<post-id>?post_id=1", data=json.dumps(body))
+        resp = await ac.put("/post/1", data=json.dumps(body))
 
     post = resp.json()
 
@@ -75,7 +75,7 @@ async def test_update_post(db_non_commit):
     body = {"title": "My First Updated Post", "body": "Welcome to my blog."}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/post/<post-id>?post_id=2", data=json.dumps(body))
+        resp = await ac.put("/post/2", data=json.dumps(body))
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This post belongs to another user"}
@@ -90,21 +90,21 @@ async def test_delete_post(db_non_commit):
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/post/<post-id>?post_id=1")
+        resp = await ac.delete("/post/1")
 
     assert resp.status_code == 204
     assert resp.json() == {"detail": "success"}
 
     # fail case - post belongs to another user
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/post/<post-id>?post_id=2")
+        resp = await ac.delete("/post/2")
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This post belongs to another user"}
 
     # fail case - post does not exist
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/post/<post-id>?post_id=999")
+        resp = await ac.delete("/post/999")
 
     assert resp.status_code == 404
     assert resp.json() == {"detail": "This post does not exist"}
@@ -116,7 +116,7 @@ async def test_delete_post(db_non_commit):
 @pytest.mark.asyncio
 async def test_get_post():
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/post/<post-id>?post_id=1")
+        resp = await ac.get("/post/1")
 
     post = resp.json()
 
@@ -133,7 +133,7 @@ async def test_create_reply():
     body = {"body": "My First Reply"}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/post/post-id/reply?post_id=1", data=json.dumps(body))
+        resp = await ac.post("/post/1/reply", data=json.dumps(body))
 
     reply = resp.json()
 
@@ -168,9 +168,7 @@ async def test_create_reply():
 async def test_get_replies():
     # successful case - id:1, skip:1, limit:3, sort:new first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/post/<post-id>/replies?post_id=1&skip=1&limit=3&sort-newest-first=true"
-        )
+        resp = await ac.get("/post/1/replies?skip=1&limit=3&sort-newest-first=true")
 
     replies = resp.json()
 
@@ -181,9 +179,7 @@ async def test_get_replies():
 
     # successful case - id:3, skip:0, limit:4, sort:old first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/post/<post-id>/replies?post_id=3&skip=0&limit=4&sort-newest-first=false"
-        )
+        resp = await ac.get("/post/3/replies?skip=0&limit=4&sort-newest-first=false")
 
     replies = resp.json()
 

@@ -21,7 +21,7 @@ async def test_update_reply(db_non_commit):
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     body = {"body": "Great post! Can't wait to hear more."}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/reply/<reply-id>?reply_id=1", data=json.dumps(body))
+        resp = await ac.put("/reply/1", data=json.dumps(body))
     reply = resp.json()
 
     assert resp.status_code == 200
@@ -32,7 +32,7 @@ async def test_update_reply(db_non_commit):
     # fail case - reply belongs to another user
     body = {"title": "My First Updated Reply", "body": "Welcome to my blog."}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/reply/<reply-id>?reply_id=2", data=json.dumps(body))
+        resp = await ac.put("/reply/2", data=json.dumps(body))
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This reply belongs to another user"}
@@ -47,21 +47,21 @@ async def test_delete_reply(db_non_commit):
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/reply/<reply-id>?reply_id=1")
+        resp = await ac.delete("/reply/1")
 
     assert resp.status_code == 204
     assert resp.json() == {"detail": "success"}
 
     # fail case - reply belongs to another user
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/reply/<reply-id>?reply_id=2")
+        resp = await ac.delete("/reply/2")
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This reply belongs to another user"}
 
     # fail case - reply does not exist
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/reply/<reply-id>?reply_id=999")
+        resp = await ac.delete("/reply/999")
 
     assert resp.status_code == 404
     assert resp.json() == {"detail": "This reply does not exist"}
@@ -73,7 +73,7 @@ async def test_delete_reply(db_non_commit):
 @pytest.mark.asyncio
 async def test_get_reply():
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/reply/<reply-id>?reply_id=1")
+        resp = await ac.get("/reply/1")
     reply = resp.json()
 
     assert resp.status_code == 200

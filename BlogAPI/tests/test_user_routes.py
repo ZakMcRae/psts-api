@@ -75,7 +75,7 @@ async def test_generate_token():
 async def test_get_user():
     # successful test case
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/user/<user-id>?user_id=1")
+        resp = await ac.get("/user/1")
 
     assert resp.status_code == 200
     assert resp.json() == {
@@ -164,9 +164,7 @@ async def test_get_me(monkeypatch):
 async def test_get_users_posts():
     # successful case - id:1, skip:1, limit:3, sort:new first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/user/<user-id>/posts?user_id=1&skip=1&limit=3&sort-newest-first=true"
-        )
+        resp = await ac.get("/user/1/posts?skip=1&limit=3&sort-newest-first=true")
     posts = resp.json()
 
     assert resp.status_code == 200
@@ -175,9 +173,7 @@ async def test_get_users_posts():
 
     # successful case - id:3, skip:0, limit:5, sort:old first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/user/<user-id>/posts?user_id=3&skip=0&limit=5&sort-newest-first=false"
-        )
+        resp = await ac.get("/user/3/posts?skip=0&limit=5&sort-newest-first=false")
     posts = resp.json()
 
     assert resp.status_code == 200
@@ -189,9 +185,7 @@ async def test_get_users_posts():
 async def test_get_users_replies():
     # successful case - id:1, skip:1, limit:3, sort:new first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/user/<user-id>/replies?user_id=1&skip=1&limit=3&sort-newest-first=true"
-        )
+        resp = await ac.get("/user/1/replies?skip=1&limit=3&sort-newest-first=true")
     replies = resp.json()
 
     assert resp.status_code == 200
@@ -200,9 +194,7 @@ async def test_get_users_replies():
 
     # successful case - id:3, skip:0, limit:5, sort:old first
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get(
-            "/user/<user-id>/replies?user_id=3&skip=0&limit=5&sort-newest-first=false"
-        )
+        resp = await ac.get("/user/3/replies?skip=0&limit=5&sort-newest-first=false")
     replies = resp.json()
 
     assert resp.status_code == 200
@@ -216,7 +208,7 @@ async def test_follow_user(db_non_commit):
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/user/follow/<user-id>?user_id=2")
+        resp = await ac.post("/user/follow/2")
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "User already followed"}
@@ -225,7 +217,7 @@ async def test_follow_user(db_non_commit):
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_elliot
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/user/follow/<user-id>?user_id=3")
+        resp = await ac.post("/user/follow/3")
 
     assert resp.status_code == 201
     assert resp.json() == {"detail": "Success - User followed"}
@@ -240,14 +232,14 @@ async def test_unfollow_user():
     # mock authorization - return user directly
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/user/follow/<user-id>?user_id=2")
+        resp = await ac.delete("/user/follow/2")
 
     assert resp.status_code == 204
     assert resp.json() == {"detail": "Success - User unfollowed"}
 
     # fail case - user already not following after above unfollow
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.delete("/user/follow/<user-id>?user_id=2")
+        resp = await ac.delete("/user/follow/2")
 
     assert resp.status_code == 404
     assert resp.json() == {"detail": "This user is not currently being followed"}
@@ -272,7 +264,7 @@ async def test_unfollow_user():
 async def test_get_followers():
     # successful case - user with followers
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/user/<user-id>/followers?user_id=1")
+        resp = await ac.get("/user/1/followers")
 
     followers = resp.json()
 
@@ -282,7 +274,7 @@ async def test_get_followers():
 
     # successful case - user with no followers
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/user/<user-id>/followers?user_id=4")
+        resp = await ac.get("/user/4/followers")
 
     followers = resp.json()
 
@@ -294,7 +286,7 @@ async def test_get_followers():
 async def test_get_following():
     # successful case - user a following
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/user/<user-id>/followers?user_id=2")
+        resp = await ac.get("/user/2/followers")
 
     following = resp.json()
 
@@ -304,7 +296,7 @@ async def test_get_following():
 
     # successful case - user with no followers
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.get("/user/<user-id>/followers?user_id=4")
+        resp = await ac.get("/user/4/followers")
 
     following = resp.json()
 

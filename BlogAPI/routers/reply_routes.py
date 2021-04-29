@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.put(
-    "/reply/<reply-id>",
+    "/reply/{reply_id}",
     response_model=UpdateReplyOut,
     responses={
         401: {
@@ -72,7 +72,7 @@ async def update_reply(
 
 
 @router.delete(
-    "/reply/<reply-id>",
+    "/reply/{reply_id}",
     responses={
         204: {
             "content": {
@@ -140,7 +140,7 @@ async def delete_reply(
     return {"detail": "success"}
 
 
-@router.get("/reply/<reply-id>", response_model=ReplyOut)
+@router.get("/reply/{reply_id}", response_model=ReplyOut)
 async def get_reply(reply_id):
     """
     # Return specified reply

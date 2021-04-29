@@ -56,7 +56,7 @@ async def create_post(
 
 
 @router.put(
-    "/post/<post-id>",
+    "/post/{post_id}",
     response_model=UpdatePostOut,
     responses={
         401: {
@@ -113,7 +113,7 @@ async def update_post(
 
 
 @router.delete(
-    "/post/<post-id>",
+    "/post/{post_id}",
     responses={
         204: {
             "content": {
@@ -179,7 +179,7 @@ async def delete_post(
     return {"detail": "success"}
 
 
-@router.get("/post/<post-id>", response_model=PostOut)
+@router.get("/post/{post_id}", response_model=PostOut)
 async def get_post(post_id):
     """
     # Return specified post
@@ -192,7 +192,7 @@ async def get_post(post_id):
     return post
 
 
-@router.post("/post/post-id/reply", response_model=ReplyOut, status_code=201)
+@router.post("/post/{post_id}/reply", response_model=ReplyOut, status_code=201)
 async def create_reply(
     post_id: int,
     new_reply: NewReplyIn,
@@ -228,8 +228,8 @@ async def create_reply(
 
 # noinspection DuplicatedCode
 # keeping docstrings/queries as is instead of refactoring into 1 function - more readable
-@router.get("/post/<post-id>/replies", response_model=List[ReplyOut])
-async def get_replies(
+@router.get("/post/{post_id}/replies", response_model=List[ReplyOut])
+async def get_posts_replies(
     post_id: int,
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
@@ -260,7 +260,7 @@ async def get_replies(
 
 
 @router.get("/posts/recent", response_model=List[PostOut])
-async def get_recent_posts(
+async def get_recent_posts_from_all_users(
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
 ):
