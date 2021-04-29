@@ -251,7 +251,6 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
         )
 
 
-# todo - should throw a 404 after already deleted
 @router.delete(
     "/user/follow/<user-id>",
     responses={
@@ -259,7 +258,14 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
             "content": {
                 "application/json": {"example": {"detail": "Success - User unfollowed"}}
             }
-        }
+        },
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "This user is not currently being followed"}
+                }
+            }
+        },
     },
     status_code=204,
 )
@@ -277,6 +283,20 @@ async def unfollow_user(user_id: int, user=Depends(get_current_user)):
     }
     ```
     """
+    # check if actually following
+    async with create_async_session() as session:
+        query = select(user_follow).where(
+            user_follow.c.user_id == user_id, user_follow.c.following_id == user.id
+        )
+        result = await session.execute(query)
+        result = result.fetchall()
+
+    if len(result) < 1:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This user is not currently being followed",
+        )
+
     # unfollow user - deletes row in user_follow table
     async with create_async_session() as session:
         stmt = user_follow.delete().where(

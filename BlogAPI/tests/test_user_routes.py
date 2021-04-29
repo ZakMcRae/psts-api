@@ -245,15 +245,12 @@ async def test_unfollow_user():
     assert resp.status_code == 204
     assert resp.json() == {"detail": "Success - User unfollowed"}
 
-    # verify row deleted
-    # get list of follower ids from database
-    async with create_async_session() as session:
-        query = select(user_follow.c.user_id).filter(user_follow.c.following_id == 1)
-        result = await session.execute(query)
+    # fail case - user already not following after above unfollow
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.delete("/user/follow/<user-id>?user_id=2")
 
-    following_ids = list(result.scalars())
-
-    assert 2 not in following_ids
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "This user is not currently being followed"}
 
     # reinsert row to maintain database state
     async with create_async_session() as session:
