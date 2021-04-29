@@ -7,7 +7,9 @@ from BlogAPI.db.db_session import engine
 from BlogAPI.routers import user_routes, post_routes, reply_routes
 
 api = fastapi.FastAPI()
-# todo - do a pass of endpoint status codes - ie delete should be 204 not 200
+# todo - path parameters not working in urls ie /post/1 returns errors
+# change <> to {}
+# maybe use Path with aliases
 
 
 def configure():
