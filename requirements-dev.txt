@@ -3,3 +3,4 @@ pytest
 httpx
 requests
 pytest-asyncio
+black
