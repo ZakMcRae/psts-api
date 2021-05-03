@@ -5,5 +5,5 @@ pydantic[email]
 PyJWT
 python-multipart
 SQLAlchemy
-starlette
 uvicorn
+starlette==0.13.6
