@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from BlogAPI.db.SQLAlchemy_models import Base, User
 from BlogAPI.dependencies.dependencies import get_db
-from BlogAPI.main import api
+from main import api
 
 # This points the api/test client to test.db instead of blog.db
 SQLALCHEMY_DATABASE_URL = (

@@ -1,4 +1,3 @@
-import json
 import pytest
 
 from httpx import AsyncClient
@@ -7,7 +6,7 @@ from sqlalchemy import select
 from BlogAPI.db.SQLAlchemy_models import Post, Reply
 from BlogAPI.db.db_session_async import create_async_session
 from BlogAPI.dependencies.dependencies import get_current_user
-from BlogAPI.main import api
+from main import api
 
 # noinspection PyUnresolvedReferences
 # db_non_commit pytest fixture used below - shows unused in editor
@@ -25,7 +24,7 @@ async def test_create_post():
     body = {"title": "My First Post", "body": "Welcome to my blog"}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/post", data=json.dumps(body))
+        resp = await ac.post("/post", json=body)
 
     post = resp.json()
 
@@ -62,7 +61,7 @@ async def test_update_post(db_non_commit):
     body = {"title": "My First Updated Post", "body": "Welcome to my blog."}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/post/1", data=json.dumps(body))
+        resp = await ac.put("/post/1", json=body)
 
     post = resp.json()
 
@@ -75,7 +74,7 @@ async def test_update_post(db_non_commit):
     body = {"title": "My First Updated Post", "body": "Welcome to my blog."}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/post/2", data=json.dumps(body))
+        resp = await ac.put("/post/2", json=body)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This post belongs to another user"}
@@ -133,7 +132,7 @@ async def test_create_reply():
     body = {"body": "My First Reply"}
 
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/post/1/reply", data=json.dumps(body))
+        resp = await ac.post("/post/1/reply", json=body)
 
     reply = resp.json()
 

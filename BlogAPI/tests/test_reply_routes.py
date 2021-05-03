@@ -1,10 +1,8 @@
-import json
-
 import pytest
 from httpx import AsyncClient
 
 from BlogAPI.dependencies.dependencies import get_current_user
-from BlogAPI.main import api
+from main import api
 
 # noinspection PyUnresolvedReferences
 # db_non_commit pytest fixture used below - shows unused in editor
@@ -21,7 +19,7 @@ async def test_update_reply(db_non_commit):
     api.dependency_overrides[get_current_user] = override_get_current_user_zak
     body = {"body": "Great post! Can't wait to hear more."}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/reply/1", data=json.dumps(body))
+        resp = await ac.put("/reply/1", json=body)
     reply = resp.json()
 
     assert resp.status_code == 200
@@ -32,7 +30,7 @@ async def test_update_reply(db_non_commit):
     # fail case - reply belongs to another user
     body = {"title": "My First Updated Reply", "body": "Welcome to my blog."}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.put("/reply/2", data=json.dumps(body))
+        resp = await ac.put("/reply/2", json=body)
 
     assert resp.status_code == 401
     assert resp.json() == {"detail": "This reply belongs to another user"}

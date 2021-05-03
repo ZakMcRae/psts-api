@@ -8,7 +8,7 @@ from sqlalchemy import select
 from BlogAPI.db.SQLAlchemy_models import user_follow
 from BlogAPI.db.db_session_async import create_async_session
 from BlogAPI.dependencies.dependencies import get_current_user
-from BlogAPI.main import api
+from main import api
 
 # noinspection PyUnresolvedReferences
 # db_non_commit pytest fixture used below - shows unused in editor
@@ -92,7 +92,7 @@ async def test_create_user(db_non_commit):
     # successful test case
     body = {"username": "zoetest", "email": "zoetest@example.com", "password": 123}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/user", data=json.dumps(body))
+        resp = await ac.post("/user", json=body)
     user_info = resp.json()
 
     assert resp.status_code == 201
@@ -102,7 +102,7 @@ async def test_create_user(db_non_commit):
     # taken username case
     body = {"username": "zaktest", "email": "zoetest@example.com", "password": 123}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/user", data=json.dumps(body))
+        resp = await ac.post("/user", json=body)
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "Username is taken, please try another"}
@@ -110,7 +110,7 @@ async def test_create_user(db_non_commit):
     # taken email case
     body = {"username": "zoetest", "email": "zaktest@example.com", "password": 123}
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
-        resp = await ac.post("/user", data=json.dumps(body))
+        resp = await ac.post("/user", json=body)
 
     assert resp.status_code == 409
     assert resp.json() == {"detail": "Email is taken, please try another"}
@@ -140,7 +140,8 @@ async def test_get_me(monkeypatch):
     assert resp.status_code == 401
     assert resp.json() == {"detail": "Token is expired"}
 
-    # successful test case
+    # successful test case - mocks some user data for test
+    # noinspection PyUnusedLocal
     def mock_return_valid(*args, **kwargs):
         user_info = {"id": 1, "username": "zaktest", "exp": 1621605216}
         return user_info
