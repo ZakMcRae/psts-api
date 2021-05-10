@@ -23,6 +23,7 @@ class ReplyOut(BaseModel):
     date_modified: Optional[datetime]
     user_id: int
     username: str
+    post_id: int
 
     class Config:
         orm_mode = True
@@ -34,6 +35,7 @@ class ReplyOut(BaseModel):
                 "date_modified": "null",
                 "user_id": 4376,
                 "username": "Matt",
+                "post_id": 498717,
             }
         }
 
@@ -57,6 +59,7 @@ class UpdateReplyOut(BaseModel):
     date_modified: Optional[datetime]
     user_id: int
     username: str
+    post_id: int
 
     class Config:
         orm_mode = True
@@ -68,5 +71,6 @@ class UpdateReplyOut(BaseModel):
                 "date_modified": "2021-04-09 14:16:00.769100",
                 "user_id": 4376,
                 "username": "Matt",
+                "post_id": 498717,
             }
         }
