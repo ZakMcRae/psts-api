@@ -114,6 +114,7 @@ async def test_delete_post(db_non_commit):
 
 @pytest.mark.asyncio
 async def test_get_post():
+    # successful case
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.get("/post/1")
 
@@ -122,6 +123,13 @@ async def test_get_post():
     assert resp.status_code == 200
     assert post.get("title") == "zaktest's post #1"
     assert post.get("body") == "This is a post of mock data. Post #1"
+
+    # failure case - post does not exist
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/post/21")
+
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "This post does not exist"}
 
 
 @pytest.mark.asyncio

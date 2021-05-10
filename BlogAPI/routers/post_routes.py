@@ -181,7 +181,17 @@ async def delete_post(
     return {"detail": "success"}
 
 
-@router.get("/post/{post_id}", response_model=PostOut)
+@router.get(
+    "/post/{post_id}",
+    response_model=PostOut,
+    responses={
+        404: {
+            "content": {
+                "application/json": {"example": {"detail": "This post does not exist"}}
+            }
+        }
+    },
+)
 async def get_post(post_id):
     """
     # Return specified post
@@ -191,6 +201,12 @@ async def get_post(post_id):
         result = await session.execute(query)
 
     post = result.scalar_one_or_none()
+
+    if post is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="This post does not exist"
+        )
+
     return post
 
 
