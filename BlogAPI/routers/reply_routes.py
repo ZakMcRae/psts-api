@@ -53,19 +53,18 @@ async def update_reply(
         query = select(Reply).filter(Reply.id == reply_id)
         result = await session.execute(query)
 
-    reply = result.scalar_one_or_none()
+        reply = result.scalar_one_or_none()
 
-    # make sure reply belongs to current user
-    if reply.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="This reply belongs to another user",
-        )
+        # make sure reply belongs to current user
+        if reply.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="This reply belongs to another user",
+            )
 
-    reply.body = updated_reply.body
-    reply.date_modified = datetime.datetime.utcnow()
+        reply.body = updated_reply.body
+        reply.date_modified = datetime.datetime.utcnow()
 
-    async with create_async_session() as session:
         await session.commit()
 
     return reply

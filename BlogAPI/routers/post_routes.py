@@ -87,26 +87,28 @@ async def update_post(
     }
     ```
     """
+    # get post user editing
     async with create_async_session() as session:
         query = select(Post).filter(Post.id == post_id)
         result = await session.execute(query)
 
-    post = result.scalar_one_or_none()
+        post = result.scalar_one_or_none()
 
-    if post.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="This post belongs to another user",
-        )
+        # verify post belongs to authorized user
+        if post.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="This post belongs to another user",
+            )
 
-    if updated_post.title:
-        post.title = updated_post.title
-    if updated_post.body:
-        post.body = updated_post.body
+        # update and store in database
+        if updated_post.title:
+            post.title = updated_post.title
+        if updated_post.body:
+            post.body = updated_post.body
 
-    post.date_modified = datetime.datetime.utcnow()
+        post.date_modified = datetime.datetime.utcnow()
 
-    async with create_async_session() as session:
         await session.commit()
 
     return post
