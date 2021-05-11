@@ -150,4 +150,9 @@ async def get_reply(reply_id):
 
     reply = result.scalar_one_or_none()
 
+    if not reply:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="This reply does not exist"
+        )
+
     return reply
