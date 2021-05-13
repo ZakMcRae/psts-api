@@ -73,7 +73,7 @@ async def update_reply(
 @router.delete(
     "/reply/{reply_id}",
     responses={
-        204: {
+        200: {
             "content": {
                 "application/json": {"example": {"detail": "Success - Reply deleted"}}
             }
@@ -91,7 +91,7 @@ async def update_reply(
             }
         },
     },
-    status_code=204,
+    status_code=200,
 )
 async def delete_reply(
     reply_id,

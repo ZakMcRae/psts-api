@@ -117,7 +117,7 @@ async def update_post(
 @router.delete(
     "/post/{post_id}",
     responses={
-        204: {
+        200: {
             "content": {
                 "application/json": {"example": {"detail": "Success - Post deleted"}}
             }
@@ -135,7 +135,7 @@ async def update_post(
             }
         },
     },
-    status_code=204,
+    status_code=200,
 )
 async def delete_post(
     post_id,

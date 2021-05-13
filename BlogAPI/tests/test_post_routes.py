@@ -91,7 +91,7 @@ async def test_delete_post(db_non_commit):
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.delete("/post/1")
 
-    assert resp.status_code == 204
+    assert resp.status_code == 200
     assert resp.json() == {"detail": "success"}
 
     # fail case - post belongs to another user

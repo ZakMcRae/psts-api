@@ -321,7 +321,7 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
 @router.delete(
     "/user/follow/{user_id}",
     responses={
-        204: {
+        200: {
             "content": {
                 "application/json": {"example": {"detail": "Success - User unfollowed"}}
             }
@@ -334,7 +334,7 @@ async def follow_user(user_id: int, user=Depends(get_current_user)):
             }
         },
     },
-    status_code=204,
+    status_code=200,
 )
 async def unfollow_user(user_id: int, user=Depends(get_current_user)):
     """

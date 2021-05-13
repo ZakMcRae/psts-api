@@ -235,7 +235,7 @@ async def test_unfollow_user():
     async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
         resp = await ac.delete("/user/follow/2")
 
-    assert resp.status_code == 204
+    assert resp.status_code == 200
     assert resp.json() == {"detail": "Success - User unfollowed"}
 
     # fail case - user already not following after above unfollow
