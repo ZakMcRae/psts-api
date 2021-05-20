@@ -77,3 +77,23 @@ async def test_get_reply():
     assert resp.status_code == 200
     assert reply.get("body") == "This is a reply of mock data. Reply #1"
     assert reply.get("username") == "zaktest"
+
+
+@pytest.mark.asyncio
+async def test_get_replies():
+    # successful case
+    body = {"ids": [2, 7]}
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/replies", json=body)
+    replies = resp.json()
+
+    assert resp.status_code == 200
+    assert replies[0].get("body") == "This is a reply of mock data. Reply #1"
+    assert replies[1].get("body") == "This is a reply of mock data. Reply #2"
+
+    # fail case - replies do not exist
+    body = {"ids": [94, 1000]}
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.post("/replies", json=body)
+
+    assert resp.status_code == 404
