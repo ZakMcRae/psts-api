@@ -13,6 +13,7 @@ from main import api
 from BlogAPI.tests.test_setup_and_utils import (
     db_non_commit,
     override_get_current_user_zak,
+    override_get_current_user_elliot,
 )
 
 
@@ -217,3 +218,29 @@ async def test_get_recent_posts():
         resp_dict["detail"][0].get("msg")
         == "ensure this value is less than or equal to 25"
     )
+
+
+@pytest.mark.asyncio
+async def test_get_following_posts():
+    # successful case
+    # mock authorization - return user directly
+    api.dependency_overrides[get_current_user] = override_get_current_user_zak
+
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/posts/following?skip=2&limit=2")
+
+    assert resp.status_code == 200
+    assert resp.json()[0].get("title") == "theotest's post #4"
+    assert resp.json()[1].get("title") == "jesstest's post #4"
+
+    # failure case - user has no followers, therefore no posts
+    # mock authorization - return user directly
+    api.dependency_overrides[get_current_user] = override_get_current_user_elliot
+
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/posts/following?skip=2&limit=2")
+
+    assert resp.status_code == 404
+
+    # delete dependency overwrite - don't want to conflict with other tests
+    del api.dependency_overrides[get_current_user]
