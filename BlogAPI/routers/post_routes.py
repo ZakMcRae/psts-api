@@ -6,7 +6,7 @@ from fastapi import HTTPException, Query
 from sqlalchemy import desc, asc, select
 from starlette import status
 
-from BlogAPI.db.SQLAlchemy_models import Post, Reply
+from BlogAPI.db.SQLAlchemy_models import Post, Reply, user_follow
 from BlogAPI.db.db_session_async import create_async_session
 from BlogAPI.dependencies.dependencies import get_current_user
 from BlogAPI.pydantic_models.post_models import (
@@ -288,6 +288,37 @@ async def get_recent_posts_from_all_users(
     """
     async with create_async_session() as session:
         query = select(Post).order_by(desc(Post.date_created)).offset(skip).limit(limit)
+
+        posts = await session.execute(query)
+
+    return list(posts.scalars())
+
+
+@router.get("/posts/following", response_model=List[PostOut])
+async def get_following_posts(
+    skip: int = 0,
+    limit: int = Query(10, ge=0, le=25),
+    user=Depends(get_current_user),
+):
+    """# Returns a list of posts from all users that the current user is following"""
+    # get list of user_ids following from database
+    async with create_async_session() as session:
+        query = select(user_follow.c.user_id).filter(
+            user_follow.c.following_id == user.id
+        )
+        result = await session.execute(query)
+
+    following_ids = list(result.scalars())
+
+    # get posts of users
+    async with create_async_session() as session:
+        query = (
+            select(Post)
+            .filter(Post.user_id.in_(following_ids))
+            .order_by(desc(Post.date_created))
+            .offset(skip)
+            .limit(limit)
+        )
 
         posts = await session.execute(query)
 
