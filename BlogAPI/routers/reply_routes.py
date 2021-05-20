@@ -1,7 +1,8 @@
 import datetime
+from typing import List
 
 from fastapi import Depends, APIRouter, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, asc
 from starlette import status
 
 from BlogAPI.db.SQLAlchemy_models import Reply
@@ -11,6 +12,7 @@ from BlogAPI.pydantic_models.reply_models import (
     UpdateReplyOut,
     UpdateReplyIn,
     ReplyOut,
+    Replies,
 )
 
 router = APIRouter()
@@ -156,3 +158,59 @@ async def get_reply(reply_id):
         )
 
     return reply
+
+
+@router.post(
+    "/replies",
+    responses={
+        200: {
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "id": 94762,
+                            "body": "Great post!",
+                            "date_created": "2021-04-07 20:37:00.769100",
+                            "date_modified": "null",
+                            "user_id": 4376,
+                            "username": "Matt",
+                            "post_id": 498717,
+                        },
+                        {
+                            "id": 94801,
+                            "body": "The trip was great, can't wait to do it again!",
+                            "date_created": "2021-04-08 21:29:00.849100",
+                            "date_modified": "null",
+                            "user_id": 3819,
+                            "username": "Kim",
+                            "post_id": 498904,
+                        },
+                    ]
+                }
+            }
+        }
+    },
+    response_model=List[ReplyOut],
+)
+async def get_replies(replies: Replies):
+    """# Returns all replies specified. Takes in a list of reply ids. Good for getting multiple replies in 1 query."""
+    # get posts of users
+    async with create_async_session() as session:
+        # Pycharm warning .in_ below - functions as expected
+        # noinspection PyUnresolvedReferences
+        query = (
+            select(Reply)
+            .filter(Reply.id.in_(replies.ids))
+            .order_by(asc(Reply.date_created))
+        )
+
+        replies = await session.execute(query)
+        replies = list(replies.scalars())
+
+        if not replies:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="These replies does not exist",
+            )
+
+    return replies
