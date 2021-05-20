@@ -321,5 +321,12 @@ async def get_following_posts(
         )
 
         posts = await session.execute(query)
+        posts = list(posts.scalars())
 
-    return list(posts.scalars())
+        if not posts:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not following anybody, no posts found",
+            )
+
+    return posts
