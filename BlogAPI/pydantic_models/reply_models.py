@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -74,3 +74,11 @@ class UpdateReplyOut(BaseModel):
                 "post_id": 498717,
             }
         }
+
+
+class Replies(BaseModel):
+    ids: List[int]
+
+    class Config:
+        orm_mode = True
+        schema_extra = {"example": {"ids": [94762, 94801]}}
