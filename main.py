@@ -39,6 +39,7 @@ api.openapi = custom_openapi
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
     configure()
-    uvicorn.run("main:api", host="127.0.0.1", port=8000, reload=True)
+    # uvicorn.run("main:api", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:api", host="0.0.0.0", port=8000, reload=True)
 else:
     configure()
