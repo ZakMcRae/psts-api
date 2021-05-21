@@ -188,7 +188,14 @@ async def get_reply(reply_id):
                     ]
                 }
             }
-        }
+        },
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "These replies do not exist"}
+                }
+            }
+        },
     },
     response_model=List[ReplyOut],
 )
@@ -209,7 +216,7 @@ async def get_replies_by_ids(replies: Replies):
         if not replies:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="These replies does not exist",
+                detail="These replies do not exist",
             )
 
     return replies
