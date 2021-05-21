@@ -277,7 +277,15 @@ async def get_posts_replies(
     return list(replies.scalars())
 
 
-@router.get("/posts/recent", response_model=List[PostOut])
+@router.get(
+    "/posts/recent",
+    response_model=List[PostOut],
+    responses={
+        404: {
+            "content": {"application/json": {"example": {"detail": "No posts founds"}}}
+        }
+    },
+)
 async def get_recent_posts_from_all_users(
     skip: int = 0,
     limit: int = Query(10, ge=0, le=25),
@@ -290,8 +298,15 @@ async def get_recent_posts_from_all_users(
         query = select(Post).order_by(desc(Post.date_created)).offset(skip).limit(limit)
 
         posts = await session.execute(query)
+        posts = list(posts.scalars())
 
-    return list(posts.scalars())
+        if not posts:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No posts founds",
+            )
+
+    return posts
 
 
 @router.get("/posts/following", response_model=List[PostOut])
