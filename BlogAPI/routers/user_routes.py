@@ -180,8 +180,15 @@ async def get_users_posts(
             .limit(limit)
         )
         posts = await session.execute(query)
+        posts = list(posts.scalars())
 
-    return list(posts.scalars())
+        if not posts:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No posts founds",
+            )
+
+    return posts
 
 
 # noinspection DuplicatedCode
