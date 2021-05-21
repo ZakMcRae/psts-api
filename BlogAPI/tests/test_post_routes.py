@@ -219,6 +219,12 @@ async def test_get_recent_posts():
         == "ensure this value is less than or equal to 25"
     )
 
+    # failure case - no posts
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/posts/recent?skip=90&limit=10")
+
+    assert resp.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_get_following_posts():
