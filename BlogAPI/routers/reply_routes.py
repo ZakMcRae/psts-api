@@ -192,9 +192,8 @@ async def get_reply(reply_id):
     },
     response_model=List[ReplyOut],
 )
-async def get_replies(replies: Replies):
+async def get_replies_by_ids(replies: Replies):
     """# Returns all replies specified. Takes in a list of reply ids. Good for getting multiple replies in 1 query."""
-    # get posts of users
     async with create_async_session() as session:
         # Pycharm warning .in_ below - functions as expected
         # noinspection PyUnresolvedReferences
