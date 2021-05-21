@@ -341,7 +341,7 @@ async def get_following_posts(
         if not posts:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User is not following anybody, no posts found",
+                detail="No posts found",
             )
 
     return posts
