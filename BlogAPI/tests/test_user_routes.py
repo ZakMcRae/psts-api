@@ -181,6 +181,12 @@ async def test_get_users_posts():
     assert posts[0].get("title") == "theotest's post #1"
     assert posts[4].get("title") == "theotest's post #5"
 
+    # failure case - no posts
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/user/3/posts?skip=99&limit=5&sort-newest-first=false")
+
+    assert resp.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_get_users_replies():
