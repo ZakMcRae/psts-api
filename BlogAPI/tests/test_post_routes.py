@@ -244,3 +244,20 @@ async def test_get_following_posts():
 
     # delete dependency overwrite - don't want to conflict with other tests
     del api.dependency_overrides[get_current_user]
+
+
+@pytest.mark.asyncio
+async def test_get_replies_from_posts():
+    # successful case
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/posts/replies?ids=2&ids=17")
+
+    assert resp.status_code == 200
+    assert resp.json()[0].get("post_id") == 2
+    assert resp.json()[7].get("post_id") == 17
+
+    # failure case - posts do not exist
+    async with AsyncClient(app=api, base_url="http://127.0.0.1:8000") as ac:
+        resp = await ac.get("/posts/replies?ids=222&ids=1717")
+
+    assert resp.status_code == 404
