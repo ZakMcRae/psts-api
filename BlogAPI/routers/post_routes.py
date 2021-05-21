@@ -330,3 +330,28 @@ async def get_following_posts(
             )
 
     return posts
+
+
+@router.get("/posts/replies", response_model=List[ReplyOut])
+async def get_replies_from_posts(ids: List[int] = Query(None, example={"ids": [1, 2]})):
+    """# Returns a list of all replies for each post specified by post_id.
+    Takes in a list of post ids. Good for getting multiple replies in 1 query."""
+    async with create_async_session() as session:
+        # Pycharm warning .in_ below - functions as expected
+        # noinspection PyUnresolvedReferences
+        query = (
+            select(Reply)
+            .filter(Reply.post_id.in_(ids))
+            .order_by(asc(Reply.date_created))
+        )
+
+        replies = await session.execute(query)
+        replies = list(replies.scalars())
+
+        if not replies:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="These replies does not exist",
+            )
+
+    return replies
