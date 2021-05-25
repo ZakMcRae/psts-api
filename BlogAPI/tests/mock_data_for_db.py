@@ -31,32 +31,32 @@ def add_sample_users():
     elliot.email = "elliottest@example.com"
     elliot.hs_password = bcrypt.hash("123")
 
-    session = TestingSessionLocal()
+    db_session = TestingSessionLocal()
     try:
-        session.add(zak)
-        session.add(jess)
-        session.add(theo)
-        session.add(elliot)
-        session.commit()
-        session.close()
+        db_session.add(zak)
+        db_session.add(jess)
+        db_session.add(theo)
+        db_session.add(elliot)
+        db_session.commit()
+        db_session.close()
         print("Users added successfully")
         return True
     except Exception as error:
         return f"error occurred: {error}"
 
 
-def add_sample_posts():
+def add_sample_posts(number_of_posts: int = 5):
     """
     adds 5 posts for 4 different users
     to build a test database full of test info
     """
-    session = TestingSessionLocal()
+    db_session = TestingSessionLocal()
 
     all_users = ["zaktest", "jesstest", "theotest", "elliottest"]
 
-    for counter in range(1, 6):
+    for counter in range(1, number_of_posts + 1):
         for user in all_users:
-            user = session.query(User).filter_by(username=f"{user}").first()
+            user = db_session.query(User).filter_by(username=f"{user}").first()
 
             post = Post()
             post.title = f"{user.username}'s post #{counter}"
@@ -64,10 +64,10 @@ def add_sample_posts():
             post.user_id = user.id
             post.username = user.username
 
-            session.add(post)
-            session.commit()
+            db_session.add(post)
+            db_session.commit()
 
-    session.close()
+    db_session.close()
     print("Posts added successfully")
 
 
@@ -76,15 +76,15 @@ def add_sample_replies():
     adds 1 reply per user to every post
     to build a test database full of test info
     """
-    session = TestingSessionLocal()
+    db_session = TestingSessionLocal()
 
-    posts = session.query(Post).all()
+    posts = db_session.query(Post).all()
 
     for counter, post in enumerate(posts):
         all_users = ["zaktest", "jesstest", "theotest", "elliottest"]
 
         for user in all_users:
-            user = session.query(User).filter_by(username=f"{user}").first()
+            user = db_session.query(User).filter_by(username=f"{user}").first()
 
             reply = Reply()
             reply.body = f"This is a reply of mock data. Reply #{counter + 1}"
@@ -92,10 +92,10 @@ def add_sample_replies():
             reply.post_id = post.id
             reply.username = user.username
 
-            session.add(reply)
-            session.commit()
+            db_session.add(reply)
+            db_session.commit()
 
-    session.close()
+    db_session.close()
     print("Replies added successfully")
 
 
@@ -105,24 +105,24 @@ def add_sample_follows():
     for testing follower/following functionality
     to build a test database full of test info
     """
-    session = TestingSessionLocal()
+    db_session = TestingSessionLocal()
 
-    zak = session.query(User).filter_by(username="zaktest").first()
-    jess = session.query(User).filter_by(username="jesstest").first()
-    theo = session.query(User).filter_by(username="theotest").first()
+    zak = db_session.query(User).filter_by(username="zaktest").first()
+    jess = db_session.query(User).filter_by(username="jesstest").first()
+    theo = db_session.query(User).filter_by(username="theotest").first()
     # leaving elliot blank to test no followers/following
 
     try:
         zak.followers += [jess, theo]
         jess.followers += [zak, theo]
         theo.followers += [zak, jess]
-        session.commit()
+        db_session.commit()
         print("Follows added successfully")
     except Exception as error:
         return f"error occurred: {error}"
 
 
-def rebuild_test_db():
+def rebuild_test_db(number_of_posts: int = 5):
     """
     Mock data for testing
     4 users (with some following others), 20 posts (5 per user), 80 replies (1 reply per user per post)
@@ -136,10 +136,13 @@ def rebuild_test_db():
 
     # add mock data
     add_sample_users()
-    add_sample_posts()
+    add_sample_posts(number_of_posts)
     add_sample_replies()
     add_sample_follows()
 
 
 if __name__ == "__main__":
-    rebuild_test_db()
+    rebuild_test_db(5)
+
+    # default to not interfere with tests is 5
+    # rebuild_test_db(5)
