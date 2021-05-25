@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from BlogAPI.db.SQLAlchemy_models import Base, User
-from BlogAPI.dependencies.dependencies import get_db
 from main import api
 
 # This points the api/test client to test.db instead of blog.db
@@ -23,15 +22,6 @@ TestingSessionLocal = sessionmaker(
 )
 
 Base.metadata.create_all(bind=engine)
-
-
-def override_get_db():
-    # for fastapi dependency overrides - give test db instead of blog db
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
 
 
 def override_get_current_user_zak():
@@ -61,6 +51,7 @@ def db_non_commit(monkeypatch):
     this does not allow any changes to be made to the test db
     """
 
+    # noinspection PyUnusedLocal
     def mock_return(*args, **kwargs):
         pass
 
@@ -69,8 +60,6 @@ def db_non_commit(monkeypatch):
     monkeypatch.setattr(Session, "commit", mock_return)
     monkeypatch.setattr(Session, "refresh", mock_return)
 
-
-api.dependency_overrides[get_db] = override_get_db
 
 # import client into other test files to test routes on test.db
 client = TestClient(api)
