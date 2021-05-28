@@ -1,6 +1,7 @@
 import fastapi
 import uvicorn
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import RedirectResponse
 
 from BlogAPI.db.SQLAlchemy_models import Base
 from BlogAPI.db.db_session import engine
@@ -27,7 +28,8 @@ def custom_openapi():
         title="BlogAPI",
         version="0.1",
         description="## A Practice API - Async Backend endpoints for a blog\n  "
-        "Made by: [ZakMcRae - GitHub](https://github.com/ZakMcRae)",
+        "Made by: [ZakMcRae - GitHub](https://github.com/ZakMcRae)  \n"
+        "Front end site: [fastapi.psts.xyz](http://fastapi.psts.xyz)",
         routes=api.routes,
     )
     api.openapi_schema = openapi_schema
@@ -35,6 +37,12 @@ def custom_openapi():
 
 
 api.openapi = custom_openapi
+
+
+@api.get("/")
+async def home():
+    return RedirectResponse(url="/docs", status_code=303)
+
 
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
