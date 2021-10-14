@@ -1,4 +1,4 @@
-# BlogAPI
+# psts-api
 An API that serves as a backend for a blog website or mobile app.  
 Check it out here at [api.psts.xyz](https://api.psts.xyz/).
 The front end is here at [fastapi.psts.xyz/](https://fastapi.psts.xyz/)
