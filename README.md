@@ -8,6 +8,8 @@ The purpose of the api is largely to be a CRUD (create, read, update, delete) ap
 Has some simple endpoints for CRUD of users, blog posts and replies to blog posts.
 Has some larger more complicated endpoints to gather several posts and their specific replies all into one object to minimize the number of queries the front end requires. Has endpoints and functionality for users to follow other users to see their posts. I deployed this app myself on a Linode server remotely through ssh using nginx and uvicorn.
 
+![](https://i.imgur.com/M0u4EVd.png)
+
 ## Learned on project
 - got a familiarity to FastAPI web framework (was very similar coming from Flask)
 - using REST API principles in project
